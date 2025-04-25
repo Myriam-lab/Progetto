@@ -62,7 +62,7 @@ public class Main {
         b.updateAssicurazione();
         System.out.println("ha l'assicurazione: "+b.isAssicurazione());
 
-        //prova passeggero
+        //provala passeggero
         Passeggero p=new Passeggero();
         System.out.println("Inserisci il Nome del passeggero: ");
         String nome1 = input.nextLine();
