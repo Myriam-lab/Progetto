@@ -91,8 +91,6 @@ public class Main {
         System.out.println("il passeggero ha le seguenti generalità:\n"+p.getNome()+" "+p.getCognome()+"\n"
                 +p.getEmail()+"\n"+p.getSsn()+"\n"+p.getPosto()+"\n"+p.getTelefono());
 
-        System.out.println("ciao prova");
-        System.out.println("ciao more");
 
     }
 }
