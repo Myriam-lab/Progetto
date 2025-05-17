@@ -4,13 +4,15 @@ public class Prenotazione {
     private Stato_prenotazione stato;
     private boolean assicurazione;
     private boolean bagaglio;
+    protected Passeggero passeggero;
 
     public Prenotazione() {
-        pnr = null;
-        num_biglietto = null;
+        pnr = "AA000";
+        num_biglietto = "BB000";
         stato = Stato_prenotazione.confermata;
         assicurazione = false;
         bagaglio = false;
+        passeggero = new Passeggero();
     }
 
     public String getPnr() {
@@ -40,6 +42,7 @@ public class Prenotazione {
     public boolean isAssicurazione() {
         return assicurazione;
     }
+
     public void updateAssicurazione() {
         this.assicurazione = !assicurazione;
     }
@@ -51,4 +54,6 @@ public class Prenotazione {
     public void updateBagaglio() {
         this.bagaglio = !bagaglio;
     }
+
+
 }

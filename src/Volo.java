@@ -1,11 +1,11 @@
-import java.sql.Time;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 public class Volo {
     protected int codice;
     protected String compagniaAerea;
-    protected Date data;
-    //protected Time orarioPrevisto; DA VEDERE COME FUNZIONA IL TIME
+    protected LocalDate data;
+    protected LocalTime orarioPrevisto;
     protected int ritardo;
     protected String origine;
     protected String destinazione;
@@ -14,8 +14,8 @@ public class Volo {
     public Volo() {
         codice = 7890;
         compagniaAerea = "";
-        data = new Date();
-        //orarioPrevisto=new Time();
+        data = null;
+        orarioPrevisto = null;
         ritardo = 0;
         stato=Stato_del_volo.in_orario;
     }
@@ -43,20 +43,21 @@ public class Volo {
         this.compagniaAerea = compagniaAerea;
     }
 
-    /*public Date getData() {
+    public LocalDate getData() {
         return data;
-    }*/
-
-    /*public void setData(Date data) {
-        this.data = data;
-    }*/
-
-    /*public Time getOrarioPrevisto() {
-        return orarioPrevisto;
     }
-    public void setOrarioPrevisto(Time orarioPrevisto) {
+
+    public void setData(LocalDate data) {
+        this.data = data;
+    }
+
+    public LocalTime getOrarioPrevisto() {
+        return orarioPrevisto.plusMinutes(ritardo);
+    }
+
+    public void setOrarioPrevisto(LocalTime orarioPrevisto) {
         this.orarioPrevisto = orarioPrevisto;
-    }*/
+    }
 
     public int getRitardo() {
         return ritardo;
@@ -65,5 +66,4 @@ public class Volo {
     public void setRitardo(int ritardo) {
         this.ritardo = ritardo;
     }
-
 }

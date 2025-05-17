@@ -1,15 +1,17 @@
 public class Volo_partenza extends Volo{
     Gate gate;
 
-    public Volo_partenza() {
-        destinazione = " Napoli";
-        gate=new Gate(02);
+    public Volo_partenza(String destinazione, String compagnia) {
+        origine = " Napoli";
+        gate=new Gate();
+        this.destinazione=destinazione;
+        this.compagniaAerea = compagnia;
     }
-    public void setOrigine(String origine) {
-        this.origine = origine;
+    public void setDestinazione(String destinazione) {
+        this.destinazione = destinazione;
     }
-    public String getOrigine() {
-        return origine;
+    public String getDestinazione() {
+        return destinazione;
     }
 
 

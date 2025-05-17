@@ -1,8 +1,8 @@
 public class Gate {
     private int numero;
 
-    public Gate(int numero) {
-        this.numero = numero;
+    public Gate() {
+        this.numero = 0;
     }
 
     public int getGate(){

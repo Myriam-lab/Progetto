@@ -1,9 +1,16 @@
 public class Volo_arrivo extends Volo{
-    public Volo_arrivo() { origine = "Napoli"; }
-    public void setDestinazione(String destinazione) {
-        this.destinazione = destinazione;
+
+    public Volo_arrivo(String origine, String compagnia) {
+        destinazione = "Napoli";
+        this.origine = origine;
+        this.compagniaAerea = compagnia;
     }
-    public String getDestinazione() {
-        return destinazione;
+
+    public void setOrigine(String origine) {
+        this.origine = origine;
+    }
+
+    public String getOrigine() {
+        return origine;
     }
 }
