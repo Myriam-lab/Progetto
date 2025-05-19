@@ -1,148 +1,171 @@
+
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * MainFrame è la finestra principale dell'applicazione.
- * Usa un CardLayout per passare dal pannello di login alla sezione principale.
- */
 public class MainFrame extends JFrame {
 
-    // CardLayout consente di cambiare "scheda" nella finestra, es: da Login a Main
     private CardLayout cardLayout;
-
-    // Pannello contenitore che gestisce tutte le schermate (login, main)
     private JPanel mainPanel;
-
-    // Campi per l'inserimento dell'utente e password nel login
-    private JTextField txtNomeUtente;
+    private JTextField txtNomeUtente, txtCodiceVolo, txtGate;
     private JPasswordField txtPassword;
+    private String ruoloUtente = "Utente";
+    private List<Volo> voliInArrivo;
+    private List<Volo> voliInPartenza;
+    private List<Prenotazione> prenotazioni;
 
-    // Campi per il pannello delle info personali
-    private JTextField txtNomePasseggero, txtCognome, txtEmail, txtSSN, txtPosto, txtTelefono;
-
-    /**
-     * Costruttore della finestra principale: inizializza GUI, layout e pannelli.
-     */
     public MainFrame() {
-        setTitle("Gestione Volo"); // Titolo finestra
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Chiudi applicazione al click su "X"
-        setSize(600, 600); // Dimensione finestra
-        setLocationRelativeTo(null); // Centra la finestra sullo schermo
+        setTitle("Gestione Aeroporto");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(800, 600);
+        setLocationRelativeTo(null);
 
-        // Inizializza il layout a schede
         cardLayout = new CardLayout();
-
-        // Pannello contenitore principale
         mainPanel = new JPanel(cardLayout);
 
-        // Aggiunge le due schermate principali
-        mainPanel.add(createLoginPanel(), "Login");   // Schermata di login
-        mainPanel.add(createMainContentPanel(), "Main"); // Area dopo il login
+        voliInArrivo = new ArrayList<>();
+        voliInPartenza = new ArrayList<>();
+        prenotazioni = new ArrayList<>();
 
-        add(mainPanel); // Aggiunge il pannello principale alla finestra
-        cardLayout.show(mainPanel, "Login"); // Mostra schermata di login all'avvio
+        mainPanel.add(createVoloPanel(), "Volo");
+        mainPanel.add(createLoginPanel(), "Login");
+        mainPanel.add(createMainContentPanel(), "Main");
+
+        add(mainPanel);
+        cardLayout.show(mainPanel, "Volo");
     }
 
-    /**
-     * Crea il pannello per il login dell'utente.
-     * @return JPanel con i campi utente, password e pulsante di accesso.
-     */
-    private JPanel createLoginPanel() {
-        // Layout a griglia 4 righe, 2 colonne, spaziatura 10px
-        JPanel loginPanel = new JPanel(new GridLayout(4, 2, 10, 10));
+    private JPanel createVoloPanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
 
-        // Crea i campi di input
+        JPanel centerPanel = new JPanel(new GridLayout(2, 1, 10, 10));
+
+        JPanel arrivoPanel = new JPanel(new BorderLayout());
+        String[] colonne = {"Codice", "Compagnia", "Origine", "Destinazione", "Data", "Orario", "Stato", "Gate"};
+        Object[][] datiArrivo = new Object[voliInArrivo.size()][8];
+
+        for (int i = 0; i < voliInArrivo.size(); i++) {
+            Volo volo = voliInArrivo.get(i);
+            datiArrivo[i] = new Object[]{
+                    volo.getCodice(), volo.getCompagnia(), volo.getOrigine(), volo.getDestinazione(),
+                    volo.getData(), volo.getOrario(), volo.getStato(), volo.getGate()
+            };
+        }
+
+        JTable tableArrivo = new JTable(datiArrivo, colonne);
+        JScrollPane scrollPaneArrivo = new JScrollPane(tableArrivo);
+        arrivoPanel.add(new JLabel("Voli in Arrivo:"), BorderLayout.NORTH);
+        arrivoPanel.add(scrollPaneArrivo, BorderLayout.CENTER);
+
+        JPanel partenzaPanel = new JPanel(new BorderLayout());
+        Object[][] datiPartenza = new Object[voliInPartenza.size()][8];
+
+        for (int i = 0; i < voliInPartenza.size(); i++) {
+            Volo volo = voliInPartenza.get(i);
+            datiPartenza[i] = new Object[]{
+                    volo.getCodice(), volo.getCompagnia(), volo.getOrigine(), volo.getDestinazione(),
+                    volo.getData(), volo.getOrario(), volo.getStato(), volo.getGate()
+            };
+        }
+
+        JTable tablePartenza = new JTable(datiPartenza, colonne);
+        JScrollPane scrollPanePartenza = new JScrollPane(tablePartenza);
+        partenzaPanel.add(new JLabel("Voli in Partenza:"), BorderLayout.NORTH);
+        partenzaPanel.add(scrollPanePartenza, BorderLayout.CENTER);
+
+        centerPanel.add(arrivoPanel);
+        centerPanel.add(partenzaPanel);
+
+        JButton btnLogin = new JButton("Accedi");
+        btnLogin.setPreferredSize(new Dimension(100, 30));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        btnLogin.addActionListener(e -> cardLayout.show(mainPanel, "Login"));
+        buttonPanel.add(btnLogin);
+
+        panel.add(centerPanel, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private JPanel createLoginPanel() {
+        JPanel loginPanel = new JPanel(new BorderLayout(10, 10));
+
+        JPanel inputPanel = new JPanel(new GridLayout(4, 2, 10, 10));
         txtNomeUtente = new JTextField();
         txtPassword = new JPasswordField();
 
-        // Riduce l'altezza dei campi con dimensione preferita
-        Dimension smallField = new Dimension(50, 25);
-        txtNomeUtente.setPreferredSize(smallField);
-        txtPassword.setPreferredSize(smallField);
+        String[] ruoli = {"Utente", "Amministratore"};
+        JComboBox<String> cmbRuolo = new JComboBox<>(ruoli);
 
-        // Etichette + campi
-        loginPanel.add(new JLabel("Nome Utente:"));
-        loginPanel.add(txtNomeUtente);
-        loginPanel.add(new JLabel("Password:"));
-        loginPanel.add(txtPassword);
+        inputPanel.add(new JLabel("Nome Utente:"));
+        inputPanel.add(txtNomeUtente);
+        inputPanel.add(new JLabel("Password:"));
+        inputPanel.add(txtPassword);
+        inputPanel.add(new JLabel("Ruolo:"));
+        inputPanel.add(cmbRuolo);
 
-        // Pulsante per accedere all'app
+        loginPanel.add(inputPanel, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton btnAccedi = new JButton("Accedi");
+        btnAccedi.addActionListener(e -> {
+            ruoloUtente = (String) cmbRuolo.getSelectedItem();
+            verificaCredenziali();
+        });
+        buttonPanel.add(btnAccedi);
 
-        // Associa azione al click del pulsante
-        btnAccedi.addActionListener(e -> verificaCredenziali());
-
-        loginPanel.add(new JLabel()); // Spazio vuoto per il layout
-        loginPanel.add(btnAccedi); // Aggiunge il bottone di accesso
+        loginPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         return loginPanel;
     }
 
-    /**
-     * Crea il pannello principale dell'app, che appare dopo il login.
-     * Contiene la barra di navigazione e i contenuti dinamici.
-     * @return JPanel principale
-     */
     private JPanel createMainContentPanel() {
-        JPanel container = new JPanel(new BorderLayout()); // Layout con Nord (barra) e Centro (contenuto)
+        JPanel container = new JPanel(new BorderLayout());
 
-        // Barra in alto con i pulsanti di navigazione
         JPanel navBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
-
-        // Crea i pulsanti
         JButton btnInfo = new JButton("Info Personali");
-        JButton btnVolo = new JButton("Volo");
-        JButton btnPrenotazione = new JButton("Prenotazione");
+        JButton btnVolo = new JButton("Voli");
+        JButton btnPrenotazione = new JButton("Prenotazioni");
         JButton btnLogout = new JButton("Logout");
 
-        // Pannello centrale che cambia in base al pulsante cliccato
         JPanel contentPanel = new JPanel(new CardLayout());
 
-        // Aggiunge i pannelli dinamici
         contentPanel.add(createInfoPanel(), "Info");
         contentPanel.add(createVoloPanel(), "Volo");
         contentPanel.add(createPrenotazionePanel(), "Prenotazione");
 
-        // Azioni associate ai pulsanti
         btnInfo.addActionListener(e -> switchContent(contentPanel, "Info"));
         btnVolo.addActionListener(e -> switchContent(contentPanel, "Volo"));
         btnPrenotazione.addActionListener(e -> switchContent(contentPanel, "Prenotazione"));
-
         btnLogout.addActionListener(e -> {
-            // Messaggio e ritorno al login
             JOptionPane.showMessageDialog(this, "Logout effettuato.");
             cardLayout.show(mainPanel, "Login");
         });
 
-        // Aggiunge i pulsanti alla barra
         navBar.add(btnInfo);
         navBar.add(btnVolo);
         navBar.add(btnPrenotazione);
         navBar.add(btnLogout);
 
-        // Aggiunge la barra e l’area centrale al contenitore
         container.add(navBar, BorderLayout.NORTH);
         container.add(contentPanel, BorderLayout.CENTER);
 
         return container;
     }
 
-    /**
-     * Crea il pannello con le informazioni personali del passeggero.
-     * @return JPanel con campi info personali
-     */
     private JPanel createInfoPanel() {
         JPanel panel = new JPanel(new GridLayout(6, 2, 5, 5));
 
-        // Campi per le info personali
-        txtNomePasseggero = new JTextField();
-        txtCognome = new JTextField();
-        txtEmail = new JTextField();
-        txtSSN = new JTextField();
-        txtPosto = new JTextField();
-        txtTelefono = new JTextField();
+        JTextField txtNomePasseggero = new JTextField();
+        JTextField txtCognome = new JTextField();
+        JTextField txtEmail = new JTextField();
+        JTextField txtSSN = new JTextField();
+        JTextField txtPosto = new JTextField();
+        JTextField txtTelefono = new JTextField();
 
-        // Etichette + campi
         panel.add(new JLabel("Nome:"));
         panel.add(txtNomePasseggero);
         panel.add(new JLabel("Cognome:"));
@@ -159,36 +182,9 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    /**
-     * Crea il pannello con i dati del volo.
-     * @return JPanel con campi del volo
-     */
-    private JPanel createVoloPanel() {
-        JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5));
-
-        // Campi del volo
-        JTextField txtOrigine = new JTextField();
-        JTextField txtDestinazione = new JTextField();
-        JTextField txtCodiceVolo = new JTextField();
-
-        panel.add(new JLabel("Origine:"));
-        panel.add(txtOrigine);
-        panel.add(new JLabel("Destinazione:"));
-        panel.add(txtDestinazione);
-        panel.add(new JLabel("Codice Volo:"));
-        panel.add(txtCodiceVolo);
-
-        return panel;
-    }
-
-    /**
-     * Crea il pannello con le info di prenotazione.
-     * @return JPanel con PNR, biglietto e opzioni
-     */
     private JPanel createPrenotazionePanel() {
         JPanel panel = new JPanel(new GridLayout(4, 2, 5, 5));
 
-        // Campi e opzioni prenotazione
         JTextField txtPNR = new JTextField();
         JTextField txtBiglietto = new JTextField();
         JCheckBox chkBagaglio = new JCheckBox("Bagaglio");
@@ -198,7 +194,7 @@ public class MainFrame extends JFrame {
         panel.add(txtPNR);
         panel.add(new JLabel("Numero Biglietto:"));
         panel.add(txtBiglietto);
-        panel.add(chkBagaglio); // Checkbox senza etichetta a destra
+        panel.add(chkBagaglio);
         panel.add(new JLabel());
         panel.add(chkAssicurazione);
         panel.add(new JLabel());
@@ -206,36 +202,66 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    /**
-     * Mostra un pannello interno specificato all'interno del contenuto centrale.
-     * @param contentPanel Il pannello con layout a schede
-     * @param name Il nome della scheda da mostrare
-     */
     private void switchContent(JPanel contentPanel, String name) {
         CardLayout cl = (CardLayout) contentPanel.getLayout();
         cl.show(contentPanel, name);
     }
 
-    /**
-     * Simula la verifica delle credenziali: accetta qualunque input.
-     */
     private void verificaCredenziali() {
-        // Ottiene nome utente e password inseriti
         String utente = txtNomeUtente.getText();
         String password = new String(txtPassword.getPassword());
 
-        // In questa versione si accetta sempre l'accesso
         JOptionPane.showMessageDialog(this, "Login effettuato con successo!");
         cardLayout.show(mainPanel, "Main");
+
+        if (ruoloUtente.equals("Amministratore")) {
+            aggiungiEsempiVoli();
+        }
     }
 
-    /**
-     * Metodo principale: avvia l'interfaccia grafica.
-     */
+    private void aggiungiEsempiVoli() {
+        voliInArrivo.add(new Volo("V001", "Alitalia", "Roma", "Napoli", "2025-06-01", "12:30", "Programmato", "Gate 1"));
+        voliInArrivo.add(new Volo("V002", "Ryanair", "Milano", "Napoli", "2025-06-01", "14:30", "In Ritardo", "Gate 2"));
+        voliInPartenza.add(new Volo("V003", "EasyJet", "Napoli", "Londra", "2025-06-01", "16:00", "Cancellato", "Gate 3"));
+        voliInPartenza.add(new Volo("V004", "Vueling", "Napoli", "Barcellona", "2025-06-01", "18:00", "Programmato", "Gate 4"));
+    }
+
+    class Volo {
+        private String codice;
+        private String compagnia;
+        private String origine;
+        private String destinazione;
+        private String data;
+        private String orario;
+        private String stato;
+        private String gate;
+
+        public Volo(String codice, String compagnia, String origine, String destinazione, String data,
+                    String orario, String stato, String gate) {
+            this.codice = codice;
+            this.compagnia = compagnia;
+            this.origine = origine;
+            this.destinazione = destinazione;
+            this.data = data;
+            this.orario = orario;
+            this.stato = stato;
+            this.gate = gate;
+        }
+
+        public String getCodice() { return codice; }
+        public String getCompagnia() { return compagnia; }
+        public String getOrigine() { return origine; }
+        public String getDestinazione() { return destinazione; }
+        public String getData() { return data; }
+        public String getOrario() { return orario; }
+        public String getStato() { return stato; }
+        public String getGate() { return gate; }
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             MainFrame frame = new MainFrame();
-            frame.setVisible(true); // Mostra la finestra
+            frame.setVisible(true);
         });
     }
 }
