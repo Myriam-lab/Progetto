@@ -1,7 +1,6 @@
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
-// import javax.swing.table.TableRowSorter; // Non usato attivamente
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -27,8 +26,13 @@ public class MainFrame extends JFrame {
     private DefaultTableModel adminTableModel;
 
     private JTextField adminCreaVoloCodice, adminCreaVoloCompagnia, adminCreaVoloOrigine, adminCreaVoloDestinazione,
-            adminCreaVoloData, adminCreaVoloOrario, adminCreaVoloStato, adminCreaVoloGate;
+            adminCreaVoloData, adminCreaVoloOrario, adminCreaVoloGate;
     private JComboBox<String> adminCreaVoloTipo;
+    private JComboBox<String> adminCreaVoloStatoComboBox;
+
+    // Stati Volo Permessi AGGIORNATI
+    private final String[] STATI_VOLO_PERMESSI = {"In Orario", "Ritardo", "Cancellato", "Atterrato", "Rinviato"};
+
 
     private static final int NUM_FILE_SEDILI = 5;
     private static final char ULTIMA_LETTERA_SEDİLE = 'D';
@@ -42,22 +46,21 @@ public class MainFrame extends JFrame {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
-        aggiungiEsempiVoli();
+        aggiungiEsempiVoli(); // Aggiornato con i nuovi stati
         aggiungiEsempiPrenotazioni();
 
         mainPanel.add(createVoloPanel(), "Volo");
         mainPanel.add(createLoginPanel(), "Login");
-        // Aggiunge un placeholder per "Main" che sarà sostituito al login
         JPanel placeholderMain = new JPanel();
         placeholderMain.setName("MainContainer_Placeholder_Initial");
         mainPanel.add(placeholderMain, "Main");
-
 
         add(mainPanel);
         cardLayout.show(mainPanel, "Volo");
     }
 
     private JPanel createVoloPanel() {
+        // ... (codice invariato rispetto alla versione precedente, usa getDatiVoli che prenderà i voli con stati aggiornati)
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setName("VoloPanel_Instance_" + System.identityHashCode(panel));
         JPanel centerPanel = new JPanel(new GridLayout(2, 1, 10, 10));
@@ -103,14 +106,28 @@ public class MainFrame extends JFrame {
                         }
 
                         if (voloSelezionato.stato.equalsIgnoreCase("Cancellato") ||
-                                voloSelezionato.stato.equalsIgnoreCase("Partito") ||
-                                voloSelezionato.stato.equalsIgnoreCase("Atterrato")) {
-                            JOptionPane.showMessageDialog(MainFrame.this,
-                                    "Impossibile prenotare il volo " + voloSelezionato.codice +
-                                            " perché è " + voloSelezionato.stato.toLowerCase() + ".",
-                                    "Prenotazione Non Disponibile", JOptionPane.WARNING_MESSAGE);
-                            return;
+                                // "Partito" non è più uno stato primario, ma un volo "In Orario" potrebbe essere in fase di partenza.
+                                // Rimuoviamo il controllo esplicito per "Partito" qui, se non è più uno stato attivo.
+                                // La logica per "Atterrato" per voli in arrivo è corretta.
+                                (sourceTable.getModel() == modelArrivo && voloSelezionato.stato.equalsIgnoreCase("Atterrato")) ||
+                                (sourceTable.getModel() == modelPartenza && ! (voloSelezionato.stato.equalsIgnoreCase("In Orario") || voloSelezionato.stato.equalsIgnoreCase("Ritardo") || voloSelezionato.stato.equalsIgnoreCase("Rinviato") ) ) // Permetti prenotazione solo se non cancellato/atterrato/ecc.
+                        ) {
+                            if(voloSelezionato.stato.equalsIgnoreCase("Cancellato") || voloSelezionato.stato.equalsIgnoreCase("Atterrato")){
+                                JOptionPane.showMessageDialog(MainFrame.this,
+                                        "Impossibile prenotare il volo " + voloSelezionato.codice +
+                                                " perché è " + voloSelezionato.stato.toLowerCase() + ".",
+                                        "Prenotazione Non Disponibile", JOptionPane.WARNING_MESSAGE);
+                                return;
+                            }
+                            // Per i voli in partenza, se lo stato non è uno di quelli che precede la partenza, avvisa.
+                            if (sourceTable.getModel() == modelPartenza && !(voloSelezionato.stato.equalsIgnoreCase("In Orario") || voloSelezionato.stato.equalsIgnoreCase("Ritardo") || voloSelezionato.stato.equalsIgnoreCase("Rinviato"))){
+                                JOptionPane.showMessageDialog(MainFrame.this,
+                                        "Lo stato del volo " + voloSelezionato.codice + " ("+voloSelezionato.stato+") non permette la prenotazione.",
+                                        "Prenotazione Non Disponibile", JOptionPane.WARNING_MESSAGE);
+                                return;
+                            }
                         }
+
 
                         PrenotazioneDialog pDialog = new PrenotazioneDialog(MainFrame.this, voloSelezionato);
                         pDialog.setVisible(true);
@@ -151,33 +168,17 @@ public class MainFrame extends JFrame {
         JButton btnLogin = new JButton("Accedi per Prenotare/Gestire");
         btnLogin.setName("LoginButton_VoloPanel");
 
-        // Determina se l'utente è loggato controllando se il pannello "MainContainer" è attualmente visibile nel mainPanel.
-        // Se non è loggato (cioè, il VoloPanel iniziale è visibile), il bottone Accedi deve essere mostrato.
         boolean isLoggedIn = false;
         Component currentTopLevelCard = getCurrentVisibleCard(mainPanel);
         if (currentTopLevelCard != null && "MainContainer".equals(currentTopLevelCard.getName())) {
             isLoggedIn = true;
         }
-        // Questo controllo è per il VoloPanel *interno* al MainContentPanel.
-        // Se il parent di questo panel è il contentPanel del MainContainer, allora siamo loggati.
-        // Per il VoloPanel iniziale, il bottone deve essere visibile se non siamo in "MainContainer".
-        Container parent = panel.getParent();
-        while(parent != null && !(parent instanceof JFrame)){
-            if("MainContentPanel_Card".equals(parent.getName())){
-                isLoggedIn = true; // Se siamo dentro il content panel, siamo loggati
-                break;
-            }
-            parent = parent.getParent();
-        }
-        // Se il ruolo è "Utente" ma non siamo loggati (cioè, stiamo vedendo il VoloPanel iniziale)
-        // O se il ruolo è "Utente" e siamo loggati ma questo pannello è quello iniziale (non dovrebbe accadere con la logica attuale)
-        // La logica più semplice è: il bottone è visibile se non siamo nel "MainContainer"
-        if (currentTopLevelCard != null && "MainContainer".equals(currentTopLevelCard.getName())) {
-            btnLogin.setVisible(false); // Se siamo nel MainContainer (loggati), nascondi nel VoloPanel interno
-        } else {
-            btnLogin.setVisible(true); // Se siamo nel VoloPanel iniziale (non loggati), mostra
-        }
 
+        if (currentTopLevelCard != null && "MainContainer".equals(currentTopLevelCard.getName())) {
+            btnLogin.setVisible(false);
+        } else {
+            btnLogin.setVisible(true);
+        }
 
         btnLogin.addActionListener(e -> cardLayout.show(mainPanel, "Login"));
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -196,8 +197,8 @@ public class MainFrame extends JFrame {
         updateVoloPanelForRole();
     }
 
-
     private Object[][] getDatiVoli(List<Volo> voli) {
+        // ... (invariato)
         Object[][] dati = new Object[voli.size()][8];
         for (int i = 0; i < voli.size(); i++) {
             Volo v = voli.get(i);
@@ -207,6 +208,7 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel createLoginPanel() {
+        // ... (invariato)
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setName("LoginPanel");
         JPanel formPanel = new JPanel();
@@ -250,19 +252,10 @@ public class MainFrame extends JFrame {
             }
 
             if (loginSuccess) {
-                // Rimuovi il placeholder o il vecchio MainContainer
-                Component oldMainOrPlaceholder = null;
-                for(Component comp : mainPanel.getComponents()){
-                    if("Main".equals(cardLayout.toString()) || "MainContainer_Placeholder_Initial".equals(comp.getName()) || "MainContainer".equals(comp.getName())){
-                        // Questo modo di trovare il componente "Main" è impreciso
-                        // Meglio affidarsi al nome o avere un riferimento.
-                        // Per ora, cerchiamo per nome se possibile.
-                        if("MainContainer_Placeholder_Initial".equals(comp.getName()) || "MainContainer".equals(comp.getName())){
-                            oldMainOrPlaceholder = comp;
-                            break;
-                        }
-                    }
-                }
+                Component oldMainOrPlaceholder = findComponentByName(mainPanel, "MainContainer_Placeholder_Initial");
+                if(oldMainOrPlaceholder == null) oldMainOrPlaceholder = findComponentByName(mainPanel, "MainContainer_Placeholder_After_Logout");
+                if(oldMainOrPlaceholder == null) oldMainOrPlaceholder = findComponentByName(mainPanel, "MainContainer");
+
                 if (oldMainOrPlaceholder != null) {
                     mainPanel.remove(oldMainOrPlaceholder);
                 }
@@ -289,6 +282,7 @@ public class MainFrame extends JFrame {
     }
 
     private void updateVoloPanelForRole() {
+        // ... (invariato)
         Component oldInitialVoloPanel = null;
         if (mainPanel.getComponentCount() > 0) {
             Component firstComp = mainPanel.getComponent(0);
@@ -299,7 +293,7 @@ public class MainFrame extends JFrame {
         if(oldInitialVoloPanel != null) {
             mainPanel.remove(oldInitialVoloPanel);
         }
-        mainPanel.add(createVoloPanel(), "Volo", 0); // Questo VoloPanel userà il `ruoloUtente` corrente
+        mainPanel.add(createVoloPanel(), "Volo", 0);
 
         Component mainContentWrapper = findComponentByName(mainPanel, "MainContainer");
         if (mainContentWrapper instanceof Container) {
@@ -309,9 +303,9 @@ public class MainFrame extends JFrame {
                 if (oldVoloPanelInterno != null) {
                     contentPanelCards.remove(oldVoloPanelInterno);
                 }
-                JPanel nuovoVoloPanelInterno = createVoloPanel(); // Questo userà il `ruoloUtente` corrente
+                JPanel nuovoVoloPanelInterno = createVoloPanel();
                 nuovoVoloPanelInterno.setName("VoloPanel_Interno");
-                setButtonVisibilityInPanel(nuovoVoloPanelInterno, "LoginButton_VoloPanel", false); // Nascondi login se interno
+                setButtonVisibilityInPanel(nuovoVoloPanelInterno, "LoginButton_VoloPanel", false);
                 contentPanelCards.add(nuovoVoloPanelInterno, "Volo");
             }
         }
@@ -321,8 +315,9 @@ public class MainFrame extends JFrame {
 
 
     private JPanel createMainContentPanel() {
+        // ... (invariato)
         JPanel container = new JPanel(new BorderLayout(0, 0));
-        container.setName("MainContainer"); // Nome importante per trovarlo
+        container.setName("MainContainer");
         JPanel navBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton btnVolo = new JButton("Visualizza Voli");
         JButton btnMiePrenotazioni = new JButton("Le Mie Prenotazioni");
@@ -333,9 +328,9 @@ public class MainFrame extends JFrame {
         JPanel contentPanel = new JPanel(new CardLayout());
         contentPanel.setName("MainContentPanel_Card");
 
-        JPanel voliPanelInterno = createVoloPanel(); // Creato con il ruoloUtente corrente
+        JPanel voliPanelInterno = createVoloPanel();
         voliPanelInterno.setName("VoloPanel_Interno");
-        setButtonVisibilityInPanel(voliPanelInterno, "LoginButton_VoloPanel", false); // Nascondi login nel panel interno
+        setButtonVisibilityInPanel(voliPanelInterno, "LoginButton_VoloPanel", false);
 
         contentPanel.add(voliPanelInterno, "Volo");
         contentPanel.add(createMiePrenotazioniPanel(), "MiePrenotazioni");
@@ -343,13 +338,12 @@ public class MainFrame extends JFrame {
         contentPanel.add(createAdminCreaVoloPanel(), "AdminCreaVolo");
 
         btnVolo.addActionListener(e -> {
-            // updateVoloPanelForRole(); // Chiamato per sicurezza, ma il VoloPanel interno dovrebbe essere già ok
             switchContent(contentPanel, "Volo");
         });
 
         btnMiePrenotazioni.addActionListener(e -> {
             if (ruoloUtente.equals("Utente")) {
-                aggiornaVistaMiePrenotazioni(); // Ricrea il pannello con dati aggiornati
+                aggiornaVistaMiePrenotazioni();
                 switchContent(contentPanel, "MiePrenotazioni");
             } else {
                 JOptionPane.showMessageDialog(this, "Funzione disponibile solo per gli utenti.", "Accesso Negato", JOptionPane.WARNING_MESSAGE);
@@ -368,6 +362,13 @@ public class MainFrame extends JFrame {
 
         btnAdminCreaVolo.addActionListener(e -> {
             if (ruoloUtente.equals("Amministratore")) {
+                if (adminCreaVoloTipo != null) { // Se il pannello è già stato inizializzato
+                    adminCreaVoloTipo.setSelectedIndex(0);
+                    handleTipoVoloChange();
+                }
+                if (adminCreaVoloStatoComboBox != null) { // Imposta stato di default
+                    adminCreaVoloStatoComboBox.setSelectedItem("In Orario");
+                }
                 switchContent(contentPanel, "AdminCreaVolo");
             } else {
                 JOptionPane.showMessageDialog(this, "Funzione disponibile solo per gli amministratori.", "Accesso Negato", JOptionPane.WARNING_MESSAGE);
@@ -376,25 +377,20 @@ public class MainFrame extends JFrame {
 
 
         btnLogout.addActionListener(e -> {
-            ruoloUtente = "Utente"; // Imposta ruolo a utente non loggato (o generico)
-            txtNomeUtente.setText(""); // Pulisci campi login
+            ruoloUtente = "Utente";
+            txtNomeUtente.setText("");
             txtPassword.setText("");
 
-            // Rimuovi il pannello MainContainer corrente
             Component oldMainContainer = findComponentByName(mainPanel, "MainContainer");
             if (oldMainContainer != null) {
                 mainPanel.remove(oldMainContainer);
             }
-            // Aggiungi un placeholder per il constraint "Main" per evitare problemi con CardLayout
-            // Questo placeholder sarà sostituito al prossimo login.
             JPanel placeholderMain = new JPanel();
-            placeholderMain.setName("MainContainer_Placeholder_After_Logout"); // Nome per debug, se necessario
-            mainPanel.add(placeholderMain, "Main"); // "Main" è il constraint usato dal CardLayout per questo slot
+            placeholderMain.setName("MainContainer_Placeholder_After_Logout");
+            mainPanel.add(placeholderMain, "Main");
 
-            updateVoloPanelForRole(); // Questo ricrea il VoloPanel iniziale (all'indice 0)
-            // usando il `ruoloUtente` appena resettato.
-            // Il VoloPanel iniziale mostrerà il pulsante "Accedi..."
-            cardLayout.show(mainPanel, "Volo"); // Mostra la schermata Voli iniziale
+            updateVoloPanelForRole();
+            cardLayout.show(mainPanel, "Volo");
         });
 
         navBar.add(btnVolo);
@@ -413,6 +409,7 @@ public class MainFrame extends JFrame {
     }
 
     private void aggiornaVistaMiePrenotazioni() {
+        // ... (invariato)
         Component mainContainerComp = findComponentByName(mainPanel, "MainContainer");
         if (mainContainerComp instanceof Container) {
             Container mainContainer = (Container) mainContainerComp;
@@ -426,14 +423,15 @@ public class MainFrame extends JFrame {
                 }
                 JPanel nuovoPanelPrenotazioni = createMiePrenotazioniPanel();
                 contentPanel.add(nuovoPanelPrenotazioni, "MiePrenotazioni");
-                // switchContent(contentPanel, "MiePrenotazioni"); // Lo switch avviene nell'action listener del bottone
                 contentPanel.revalidate();
                 contentPanel.repaint();
             }
         }
     }
 
+
     private JPanel createMiePrenotazioniPanel() {
+        // ... (invariato)
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setName("MiePrenotazioniPanel_Internal");
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -483,6 +481,7 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel createAdminPrenotazioniPanel() {
+        // ... (invariato)
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setName("AdminPrenotazioniPanel_Internal");
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -521,6 +520,7 @@ public class MainFrame extends JFrame {
     }
 
     private void aggiornaVistaAdminPrenotazioni(String nomeFilter, String cognomeFilter) {
+        // ... (invariato)
         if (adminTableModel == null) return;
         adminTableModel.setRowCount(0);
 
@@ -556,6 +556,12 @@ public class MainFrame extends JFrame {
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloCompagnia = new JTextField(15); panel.add(adminCreaVoloCompagnia, gbc);
         y++;
 
+        gbc.gridx = 0; gbc.gridy = y; gbc.fill = GridBagConstraints.NONE; panel.add(new JLabel("Tipo Volo:"), gbc);
+        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloTipo = new JComboBox<>(new String[]{"In Partenza", "In Arrivo"});
+        adminCreaVoloTipo.addItemListener(e -> handleTipoVoloChange());
+        panel.add(adminCreaVoloTipo, gbc);
+        y++;
+
         gbc.gridx = 0; gbc.gridy = y; gbc.fill = GridBagConstraints.NONE; panel.add(new JLabel("Origine:"), gbc);
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloOrigine = new JTextField(15); panel.add(adminCreaVoloOrigine, gbc);
         y++;
@@ -563,6 +569,12 @@ public class MainFrame extends JFrame {
         gbc.gridx = 0; gbc.gridy = y; gbc.fill = GridBagConstraints.NONE; panel.add(new JLabel("Destinazione:"), gbc);
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloDestinazione = new JTextField(15); panel.add(adminCreaVoloDestinazione, gbc);
         y++;
+
+        // Chiama handleTipoVoloChange dopo aver inizializzato i componenti a cui si riferisce
+        // È importante che adminCreaVoloOrigine e adminCreaVoloDestinazione siano già stati creati.
+        // Per essere sicuri, lo chiamiamo qui e quando il bottone "Crea Nuovo Volo" viene cliccato
+        // o quando il pannello viene mostrato.
+        // handleTipoVoloChange(); // Chiamata iniziale spostata nell'ActionListener di btnAdminCreaVolo
 
         gbc.gridx = 0; gbc.gridy = y; gbc.fill = GridBagConstraints.NONE; panel.add(new JLabel("Data (YYYY-MM-DD):"), gbc);
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloData = new JTextField(10); panel.add(adminCreaVoloData, gbc);
@@ -573,16 +585,18 @@ public class MainFrame extends JFrame {
         y++;
 
         gbc.gridx = 0; gbc.gridy = y; gbc.fill = GridBagConstraints.NONE; panel.add(new JLabel("Stato Iniziale:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloStato = new JTextField(10); adminCreaVoloStato.setText("Programmato"); panel.add(adminCreaVoloStato, gbc);
+        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloStatoComboBox = new JComboBox<>(STATI_VOLO_PERMESSI);
+        adminCreaVoloStatoComboBox.setSelectedItem("In Orario"); // Default
+        panel.add(adminCreaVoloStatoComboBox, gbc);
         y++;
 
         gbc.gridx = 0; gbc.gridy = y; gbc.fill = GridBagConstraints.NONE; panel.add(new JLabel("Gate:"), gbc);
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloGate = new JTextField(5); panel.add(adminCreaVoloGate, gbc);
         y++;
 
-        gbc.gridx = 0; gbc.gridy = y; gbc.fill = GridBagConstraints.NONE; panel.add(new JLabel("Tipo Volo:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloTipo = new JComboBox<>(new String[]{"In Partenza", "In Arrivo"}); panel.add(adminCreaVoloTipo, gbc);
-        y++;
+        // Chiamata iniziale per impostare Origine/Destinazione in base al tipo di default
+        if (adminCreaVoloTipo.getSelectedIndex() == -1) adminCreaVoloTipo.setSelectedIndex(0); // Assicura che uno sia selezionato
+        handleTipoVoloChange();
 
         gbc.gridy = y;
         gbc.gridx = 0;
@@ -598,12 +612,23 @@ public class MainFrame extends JFrame {
                 String destinazione = adminCreaVoloDestinazione.getText().trim();
                 String data = adminCreaVoloData.getText().trim();
                 String orario = adminCreaVoloOrario.getText().trim();
-                String stato = adminCreaVoloStato.getText().trim();
+                String stato = (String) adminCreaVoloStatoComboBox.getSelectedItem();
                 String gate = adminCreaVoloGate.getText().trim();
                 String tipo = (String) adminCreaVoloTipo.getSelectedItem();
 
+                if ("In Partenza".equals(tipo) && !origine.equalsIgnoreCase("Napoli NAP")) {
+                    JOptionPane.showMessageDialog(this, "Per i voli in partenza, l'origine deve essere 'Napoli NAP'.", "Errore Input", JOptionPane.ERROR_MESSAGE);
+                    adminCreaVoloOrigine.setText("Napoli NAP");
+                    return;
+                }
+                if ("In Arrivo".equals(tipo) && !destinazione.equalsIgnoreCase("Napoli NAP")) {
+                    JOptionPane.showMessageDialog(this, "Per i voli in arrivo, la destinazione deve essere 'Napoli NAP'.", "Errore Input", JOptionPane.ERROR_MESSAGE);
+                    adminCreaVoloDestinazione.setText("Napoli NAP");
+                    return;
+                }
+
                 if (codice.isEmpty() || compagnia.isEmpty() || origine.isEmpty() || destinazione.isEmpty() ||
-                        data.isEmpty() || orario.isEmpty() || stato.isEmpty() || gate.isEmpty()) {
+                        data.isEmpty() || orario.isEmpty() || stato == null || stato.isEmpty() || gate.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Tutti i campi sono obbligatori.", "Errore Input", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
@@ -624,9 +649,11 @@ public class MainFrame extends JFrame {
                 }
                 JOptionPane.showMessageDialog(this, "Volo " + codice + " creato con successo!", "Volo Creato", JOptionPane.INFORMATION_MESSAGE);
 
-                adminCreaVoloCodice.setText(""); adminCreaVoloCompagnia.setText(""); adminCreaVoloOrigine.setText("");
-                adminCreaVoloDestinazione.setText(""); adminCreaVoloData.setText(""); adminCreaVoloOrario.setText("");
-                adminCreaVoloStato.setText("Programmato"); adminCreaVoloGate.setText("");
+                adminCreaVoloCodice.setText(""); adminCreaVoloCompagnia.setText("");
+                handleTipoVoloChange(); // Resetta origine/destinazione
+                adminCreaVoloData.setText(""); adminCreaVoloOrario.setText("");
+                adminCreaVoloStatoComboBox.setSelectedItem("In Orario");
+                adminCreaVoloGate.setText("");
 
                 refreshVoloTables();
             } catch (Exception ex) {
@@ -637,70 +664,88 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
+    private void handleTipoVoloChange() {
+        if (adminCreaVoloTipo == null || adminCreaVoloOrigine == null || adminCreaVoloDestinazione == null) {
+            return;
+        }
+        String tipoSelezionato = (String) adminCreaVoloTipo.getSelectedItem();
+        if ("In Partenza".equals(tipoSelezionato)) {
+            adminCreaVoloOrigine.setText("Napoli NAP");
+            adminCreaVoloOrigine.setEditable(false);
+            adminCreaVoloDestinazione.setText(""); // Pulisci se era preimpostato
+            adminCreaVoloDestinazione.setEditable(true);
+        } else if ("In Arrivo".equals(tipoSelezionato)) {
+            adminCreaVoloOrigine.setText(""); // Pulisci se era preimpostato
+            adminCreaVoloOrigine.setEditable(true);
+            adminCreaVoloDestinazione.setText("Napoli NAP");
+            adminCreaVoloDestinazione.setEditable(false);
+        } else {
+            adminCreaVoloOrigine.setEditable(true);
+            adminCreaVoloDestinazione.setEditable(true);
+        }
+    }
 
     private void switchContent(JPanel panel, String name) {
         CardLayout cl = (CardLayout) panel.getLayout();
         cl.show(panel, name);
     }
 
+    // AGGIORNATO con i nuovi stati di volo
     private void aggiungiEsempiVoli() {
+        // VOLI IN ARRIVO
         voliInArrivo.add(new Volo("AZ204", "Alitalia", "Roma FCO", "Napoli NAP", "2025-05-21", "09:30", "In Orario", "A01"));
-        voliInArrivo.add(new Volo("FR1822", "Ryanair", "Milano BGY", "Napoli NAP", "2025-05-21", "10:15", "Previsto", "A02"));
+        voliInArrivo.add(new Volo("FR1822", "Ryanair", "Milano BGY", "Napoli NAP", "2025-05-21", "10:15", "In Orario", "A02")); // Era Programmato
         voliInArrivo.add(new Volo("U22851", "EasyJet", "Venezia VCE", "Napoli NAP", "2025-05-21", "11:00", "Atterrato", "A03"));
-        voliInArrivo.add(new Volo("LH1778", "Lufthansa", "Monaco MUC", "Napoli NAP", "2025-05-21", "12:30", "In Ritardo", "A04"));
+        voliInArrivo.add(new Volo("LH1778", "Lufthansa", "Monaco MUC", "Napoli NAP", "2025-05-21", "12:30", "Ritardo", "A04"));
         voliInArrivo.add(new Volo("AF1578", "Air France", "Parigi CDG", "Napoli NAP", "2025-05-21", "13:45", "In Orario", "A05"));
-        voliInArrivo.add(new Volo("BA2608", "British Airways", "Londra LHR", "Napoli NAP", "2025-05-21", "14:20", "Previsto", "B01"));
+        voliInArrivo.add(new Volo("BA2608", "British Airways", "Londra LHR", "Napoli NAP", "2025-05-21", "14:20", "In Orario", "B01")); // Era Programmato
         voliInArrivo.add(new Volo("VY6720", "Vueling", "Barcellona BCN", "Napoli NAP", "2025-05-21", "15:00", "In Orario", "B02"));
         voliInArrivo.add(new Volo("EK097", "Emirates", "Dubai DXB", "Napoli NAP", "2025-05-21", "16:30", "Cancellato", "B03"));
         voliInArrivo.add(new Volo("TK1879", "Turkish Airlines", "Istanbul IST", "Napoli NAP", "2025-05-21", "17:55", "In Orario", "B04"));
-        voliInArrivo.add(new Volo("IB3270", "Iberia", "Madrid MAD", "Napoli NAP", "2025-05-21", "19:10", "Previsto", "B05"));
+        voliInArrivo.add(new Volo("IB3270", "Iberia", "Madrid MAD", "Napoli NAP", "2025-05-21", "19:10", "Rinviato", "B05"));   // Era Programmato, ora Rinviato per esempio
 
-        voliInPartenza.add(new Volo("AZ205", "Alitalia", "Napoli NAP", "Roma FCO", "2025-05-21", "10:00", "Imbarco", "C01"));
-        voliInPartenza.add(new Volo("FR1823", "Ryanair", "Napoli NAP", "Milano BGY", "2025-05-21", "11:05", "Ultima Chiamata", "C02"));
-        voliInPartenza.add(new Volo("U22852", "EasyJet", "Napoli NAP", "Venezia VCE", "2025-05-21", "11:50", "Partito", "C03"));
-        voliInPartenza.add(new Volo("LH1779", "Lufthansa", "Napoli NAP", "Monaco MUC", "2025-05-21", "13:15", "In Ritardo", "C04"));
-        voliInPartenza.add(new Volo("AF1579", "Air France", "Napoli NAP", "Parigi CDG", "2025-05-21", "14:30", "Previsto", "D01"));
-        voliInPartenza.add(new Volo("BA2609", "British Airways", "Napoli NAP", "Londra LHR", "2025-05-21", "15:00", "Imbarco", "D02"));
-        voliInPartenza.add(new Volo("VY6721", "Vueling", "Napoli NAP", "Barcellona BCN", "2025-05-21", "15:45", "Previsto", "D03"));
+        // VOLI IN PARTENZA
+        voliInPartenza.add(new Volo("AZ205", "Alitalia", "Napoli NAP", "Roma FCO", "2025-05-21", "10:00", "In Orario", "C01"));
+        voliInPartenza.add(new Volo("FR1823", "Ryanair", "Napoli NAP", "Milano BGY", "2025-05-21", "11:05", "In Orario", "C02"));
+        voliInPartenza.add(new Volo("U22852", "EasyJet", "Napoli NAP", "Venezia VCE", "2025-05-21", "11:50", "In Orario", "C03")); // Era Partito
+        voliInPartenza.add(new Volo("LH1779", "Lufthansa", "Napoli NAP", "Monaco MUC", "2025-05-21", "13:15", "Ritardo", "C04"));
+        voliInPartenza.add(new Volo("AF1579", "Air France", "Napoli NAP", "Parigi CDG", "2025-05-21", "14:30", "In Orario", "D01"));// Era Programmato
+        voliInPartenza.add(new Volo("BA2609", "British Airways", "Napoli NAP", "Londra LHR", "2025-05-21", "15:00", "In Orario", "D02"));
+        voliInPartenza.add(new Volo("VY6721", "Vueling", "Napoli NAP", "Barcellona BCN", "2025-05-21", "15:45", "Rinviato", "D03"));// Era Programmato, ora Rinviato per esempio
         voliInPartenza.add(new Volo("EK098", "Emirates", "Napoli NAP", "Dubai DXB", "2025-05-21", "17:10", "Cancellato", "D04"));
-        voliInPartenza.add(new Volo("TK1880", "Turkish Airlines", "Napoli NAP", "Istanbul IST", "2025-05-21", "18:30", "Previsto", "E01"));
-        voliInPartenza.add(new Volo("IB3271", "Iberia", "Napoli NAP", "Madrid MAD", "2025-05-21", "19:50", "Ultima Chiamata", "E02"));
-        voliInPartenza.add(new Volo("W65728", "Wizz Air", "Napoli NAP", "Bucarest OTP", "2025-05-21", "20:30", "Previsto", "E03"));
-        voliInPartenza.add(new Volo("KL1682", "KLM", "Napoli NAP", "Amsterdam AMS", "2025-05-21", "21:15", "Imbarco", "E04"));
+        voliInPartenza.add(new Volo("TK1880", "Turkish Airlines", "Napoli NAP", "Istanbul IST", "2025-05-21", "18:30", "In Orario", "E01"));// Era Programmato
+        voliInPartenza.add(new Volo("IB3271", "Iberia", "Napoli NAP", "Madrid MAD", "2025-05-21", "19:50", "In Orario", "E02"));
+        voliInPartenza.add(new Volo("W65728", "Wizz Air", "Napoli NAP", "Bucarest OTP", "2025-05-21", "20:30", "In Orario", "E03"));// Era Programmato
+        voliInPartenza.add(new Volo("KL1682", "KLM", "Napoli NAP", "Amsterdam AMS", "2025-05-21", "21:15", "In Orario", "E04"));
     }
 
     private void aggiungiEsempiPrenotazioni() {
+        // ... (invariato)
         if (voliInPartenza.size() < 5 || voliInArrivo.size() < 2) {
             System.err.println("Numero insufficiente di voli di esempio per creare tutte le prenotazioni di esempio.");
             return;
         }
-        // Prenotazioni per AZ205 (Napoli NAP -> Roma FCO) - voloPartenza.get(0)
         prenotazioni.add(new Prenotazione("Mario", "Rossi", "RSSMRA80A01H501A", "01/01/1980", "mario.rossi@example.com", "3331234567",
                 voliInPartenza.get(0), "1A", true, true));
         prenotazioni.add(new Prenotazione("Giulia", "Neri", "NERGLI85M41H501Z", "20/08/1985", "giulia.neri@example.com", "3339876543",
                 voliInPartenza.get(0), "1B", false, true));
-
-        // Prenotazioni per FR1823 (Napoli NAP -> Milano BGY) - voloPartenza.get(1)
         prenotazioni.add(new Prenotazione("Laura", "Bianchi", "BNCLRA85M41H501B", "21/08/1985", "laura.bianchi@example.com", "3387654321",
                 voliInPartenza.get(1), "2B", false, true));
         prenotazioni.add(new Prenotazione("Paolo", "Gallo", "GLLPLA70A01F205X", "01/01/1970", "paolo.gallo@example.com", "3201234567",
                 voliInPartenza.get(1), "2A", true, false));
-
-        // Prenotazioni per utente "utente"
         prenotazioni.add(new Prenotazione("utente", "Test", "TSTUSR90C02H501C", "02/03/1990", "utente.test@example.com", "3471122334",
-                voliInArrivo.get(0), "3C", true, false)); // Volo AZ204
+                voliInArrivo.get(0), "3C", true, false));
         prenotazioni.add(new Prenotazione("utente", "Test", "TSTUSR90C02H501C", "02/03/1990", "utente.test@example.com", "3471122334",
-                voliInPartenza.get(2), "1D", false, true)); // Volo U22852
-
-
+                voliInPartenza.get(2), "1D", false, true));
         prenotazioni.add(new Prenotazione("Giovanni", "Verdi", "VRDGNN75P03H501D", "03/09/1975", "giovanni.verdi@example.com", "3294455667",
-                voliInPartenza.get(4), "4D", false, false)); // Volo AF1579
+                voliInPartenza.get(4), "4D", false, false));
         prenotazioni.add(new Prenotazione("Mario", "Gialli", "GLLMRA82A01H501E", "10/01/1982", "mario.gialli@example.com", "3359876543",
-                voliInArrivo.get(1), "1B", true, true)); // Volo FR1822
+                voliInArrivo.get(1), "1B", true, true));
     }
 
 
     private Component getCurrentVisibleCard(JPanel cardPanel) {
+        // ... (invariato)
         for (Component comp : cardPanel.getComponents()) {
             if (comp.isVisible()) {
                 return comp;
@@ -710,6 +755,7 @@ public class MainFrame extends JFrame {
     }
 
     private Component findComponentByName(Container container, String name) {
+        // ... (invariato)
         if (name == null || container == null) return null;
         for (Component comp : container.getComponents()) {
             if (name.equals(comp.getName())) {
@@ -724,6 +770,7 @@ public class MainFrame extends JFrame {
     }
 
     private void setButtonVisibilityInPanel(JPanel panel, String buttonName, boolean visible) {
+        // ... (invariato)
         Component button = findComponentByName(panel, buttonName);
         if (button instanceof JButton) {
             button.setVisible(visible);
@@ -731,6 +778,7 @@ public class MainFrame extends JFrame {
     }
 
     class Volo {
+        // ... (invariato)
         String codice, compagnia, origine, destinazione, data, orario, stato, gate;
         public Volo(String codice, String compagnia, String origine, String destinazione, String data,
                     String orario, String stato, String gate) {
@@ -741,6 +789,7 @@ public class MainFrame extends JFrame {
     }
 
     class Prenotazione {
+        // ... (invariato)
         String nome, cognome, ssn, dataNascita, email, telefono;
         Volo volo;
         String postoSelezionato;
@@ -757,6 +806,7 @@ public class MainFrame extends JFrame {
     }
 
     class PrenotazioneDialog extends JDialog {
+        // ... (invariato)
         private Volo voloDialogo;
         private Prenotazione prenotazioneEffettuata;
         private boolean confermata = false;
