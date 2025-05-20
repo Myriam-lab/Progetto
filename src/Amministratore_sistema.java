@@ -13,7 +13,7 @@ public class Amministratore_sistema extends Utente {
 
         Volo_partenza volo = new Volo_partenza(destinazione, compagnia);
         volo.gate.setGate(gate);
-        volo.setCodice(volo.getCodice()+1);
+        volo.setCodice(volo.getCodice());
         volo.setOrarioPrevisto(LocalTime.of(hour,minute));
         volo.setData(LocalDate.of(year,month,day));
 
