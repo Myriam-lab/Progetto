@@ -2,7 +2,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 public class Volo {
-    protected int codice;
+    protected String codice;
     protected String compagniaAerea;
     protected LocalDate data;
     protected LocalTime orarioPrevisto;
@@ -12,7 +12,7 @@ public class Volo {
     protected Stato_del_volo stato;
 
     public Volo() {
-        codice = 7890;
+        codice = "AA000";
         compagniaAerea = "";
         data = null;
         orarioPrevisto = null;
@@ -20,11 +20,11 @@ public class Volo {
         stato=Stato_del_volo.in_orario;
     }
 
-    public int getCodice() {
+    public String getCodice() {
         return codice;
     }
 
-    public void setCodice(int codice) {
+    public void setCodice(String codice) {
         this.codice = codice;
     }
 
