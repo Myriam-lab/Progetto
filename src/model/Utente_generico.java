@@ -1,3 +1,5 @@
+package model;
+
 import java.util.Scanner;
 
 public class Utente_generico extends Utente {
@@ -7,7 +9,7 @@ public class Utente_generico extends Utente {
     }
 
     public Prenotazione creaPrenotazione(String nome, String cognome, String telefono, String email,
-                                  int posto, String ssn) {
+                                  String posto, String ssn) {
         Prenotazione prenotazione = new Prenotazione();
         Scanner sc = new Scanner(System.in);
 
@@ -65,7 +67,7 @@ public class Utente_generico extends Utente {
                  }
                  case 4: {
                      System.out.println("Inserisci il posto");
-                     int posto=sc.nextInt();
+                     String posto=sc.nextLine();
                      pren.passeggero.setPosto(posto);
                      break;
                  }

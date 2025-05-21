@@ -1,5 +1,7 @@
+package model;
+
 public class Volo_partenza extends Volo{
-    Gate gate;
+    public Gate gate;
 
     public Volo_partenza(String destinazione, String compagnia) {
         origine = " Napoli";
@@ -7,12 +9,7 @@ public class Volo_partenza extends Volo{
         this.destinazione=destinazione;
         this.compagniaAerea = compagnia;
     }
-    public void setDestinazione(String destinazione) {
-        this.destinazione = destinazione;
-    }
-    public String getDestinazione() {
-        return destinazione;
-    }
+
 
 
 }

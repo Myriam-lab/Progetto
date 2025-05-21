@@ -1,3 +1,5 @@
+package model;
+
 public class Prenotazione {
     private String pnr;
     private String num_biglietto;
@@ -5,6 +7,7 @@ public class Prenotazione {
     private boolean assicurazione;
     private boolean bagaglio;
     protected Passeggero passeggero;
+    private String codiceVolo;
 
     public Prenotazione() {
         pnr = "AA000";
@@ -55,5 +58,20 @@ public class Prenotazione {
         this.bagaglio = !bagaglio;
     }
 
+    public Passeggero getPasseggero() {
+        return passeggero;
+    }
+
+    public void setPasseggero(Passeggero passeggero) {
+        this.passeggero = passeggero;
+    }
+
+    public String getCodiceVolo() {
+        return codiceVolo;
+    }
+
+    public void setCodiceVolo(String codiceVolo) {
+        this.codiceVolo = codiceVolo;
+    }
 
 }

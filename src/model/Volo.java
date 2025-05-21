@@ -1,3 +1,5 @@
+package model;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -65,5 +67,21 @@ public class Volo {
 
     public void setRitardo(int ritardo) {
         this.ritardo = ritardo;
+    }
+
+    public void setOrigine(String origine) {
+        this.origine = origine;
+    }
+
+    public String getOrigine() {
+        return origine;
+    }
+
+    public void setDestinazione(String destinazione) {
+        this.destinazione = destinazione;
+    }
+
+    public String getDestinazione() {
+        return destinazione;
     }
 }

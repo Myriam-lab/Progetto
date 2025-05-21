@@ -1,9 +1,11 @@
+package model;
+
 public class Passeggero {
     private String nome;
     private String cognome;
     private String email;
     private String ssn;
-    private int posto;
+    private String posto;
     private String telefono;
 
     public Passeggero() {
@@ -11,7 +13,7 @@ public class Passeggero {
         cognome = null;
         email = null;
         ssn = null;
-        posto = 0;
+        posto = null;
         telefono = null;
     }
 
@@ -47,11 +49,11 @@ public class Passeggero {
 
     }
     
-    public int getPosto() {
+    public String getPosto() {
         return posto;
     }
 
-    public void setPosto(int posto) {
+    public void setPosto(String posto) {
         this.posto = posto;
     }
 
