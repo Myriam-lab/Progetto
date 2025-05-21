@@ -1,7 +1,7 @@
 package controller;
 
 import model.*;
-import gui.AppGUI; // Assuming AppGUI will be in a 'gui' package
+import gui.AppGUI;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -17,12 +17,11 @@ public class AppController {
     private List<Volo> voliInArrivo = new ArrayList<>();
     private List<Volo> voliInPartenza = new ArrayList<>();
     private List<Prenotazione> prenotazioni = new ArrayList<>();
-    private Utente utenteCorrente; // To store the logged-in user (simplified)
-    private AppGUI gui; // Reference to the GUI
+    private Utente utenteCorrente;
+    private AppGUI gui;
 
-    // Formatters for date and time - can be shared or be in GUI if only for display
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE; // YYYY-MM-DD
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME; // HH:MM or HH:MM:SS
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME;
 
 
     public AppController() {
@@ -34,7 +33,6 @@ public class AppController {
         this.gui = gui;
     }
 
-    // --- Data Access Methods ---
     public List<Volo> getVoliInArrivo() {
         return voliInArrivo;
     }
@@ -53,10 +51,9 @@ public class AppController {
         } else if (utenteCorrente instanceof Utente_generico) {
             return "Utente";
         }
-        return "Nessuno"; // Or a default guest role
+        return "Nessuno";
     }
 
-    // --- Login Logic ---
     public boolean login(String username, String password) {
         if ("admin".equals(username) && "admin".equals(password)) {
             utenteCorrente = new Amministratore_sistema(username, password);
@@ -74,7 +71,6 @@ public class AppController {
     }
 
 
-    // --- Flight Creation Logic (Admin) ---
     public boolean creaNuovoVolo(String codice, String compagnia, String tipoVolo, String origine, String destinazione,
                                  String dataStr, String orarioStr, String statoDisplay, String gateStr) {
         if (codice.isEmpty() || compagnia.isEmpty() || origine.isEmpty() || destinazione.isEmpty() ||
@@ -130,7 +126,7 @@ public class AppController {
                 }
                 nuovoVolo = vp;
                 voliInPartenza.add(nuovoVolo);
-            } else { // In Arrivo
+            } else {
                 if (!destinazione.equalsIgnoreCase("Napoli NAP")) {
                     gui.mostraMessaggioErrore("Per i voli in arrivo a questo aeroporto, la destinazione è 'Napoli NAP'.", "Errore Input");
                     return false;
@@ -151,7 +147,6 @@ public class AppController {
         }
     }
 
-    // --- Booking Logic (User) ---
     public boolean creaNuovaPrenotazione(Volo voloSelezionato, String nome, String cognome, String ssn,
                                          String email, String telefono, String postoSelezionatoStr,
                                          boolean bagaglio, boolean assicurazione) {
@@ -160,7 +155,7 @@ public class AppController {
             gui.mostraMessaggioErroreDialogo("Tutti i campi dei dati personali (incluso SSN) sono obbligatori.", "Dati Mancanti");
             return false;
         }
-        if (ssn.length() < 5 ) { // Simplified
+        if (ssn.length() < 5 ) {
             gui.mostraMessaggioErroreDialogo("Il formato SSN/Codice Fiscale non è valido.", "Errore Dati");
             return false;
         }
@@ -217,7 +212,6 @@ public class AppController {
     }
 
 
-    // --- Helper Methods ---
     public Volo findVoloByCodice(String codiceVolo) {
         if (codiceVolo == null) return null;
         return Stream.concat(voliInArrivo.stream(), voliInPartenza.stream())
@@ -250,10 +244,8 @@ public class AppController {
     }
 
 
-    // --- Example Data Initialization ---
     private void aggiungiEsempiVoli() {
         try {
-            // VOLI IN ARRIVO ESISTENTI
             Volo_arrivo arrivo1 = new Volo_arrivo("Roma FCO", "Alitalia");
             arrivo1.setCodice("AZ204");
             arrivo1.setData(LocalDate.parse("2025-05-21"));
@@ -283,7 +275,6 @@ public class AppController {
             arrivo4.setRitardo(30);
             voliInArrivo.add(arrivo4);
 
-            // NUOVI VOLI IN ARRIVO
             Volo_arrivo arrivo5 = new Volo_arrivo("Parigi CDG", "Air France");
             arrivo5.setCodice("AF1320");
             arrivo5.setData(LocalDate.parse("2025-05-21"));
@@ -296,18 +287,17 @@ public class AppController {
             arrivo6.setData(LocalDate.parse("2025-05-21"));
             arrivo6.setOrarioPrevisto(LocalTime.parse("16:45:00"));
             arrivo6.setStato(Stato_del_volo.in_ritardo);
-            arrivo6.setRitardo(15); // 15 minuti di ritardo
+            arrivo6.setRitardo(15);
             voliInArrivo.add(arrivo6);
 
             Volo_arrivo arrivo7 = new Volo_arrivo("Amsterdam AMS", "KLM");
             arrivo7.setCodice("KL1677");
-            arrivo7.setData(LocalDate.parse("2025-05-22")); // Giorno successivo
+            arrivo7.setData(LocalDate.parse("2025-05-22"));
             arrivo7.setOrarioPrevisto(LocalTime.parse("08:50:00"));
             arrivo7.setStato(Stato_del_volo.in_orario);
             voliInArrivo.add(arrivo7);
 
 
-            // VOLI IN PARTENZA ESISTENTI
             Volo_partenza partenza1 = new Volo_partenza("Roma FCO", "Alitalia");
             partenza1.setCodice("AZ205");
             partenza1.setData(LocalDate.parse("2025-05-21"));
@@ -332,7 +322,6 @@ public class AppController {
             partenza3.gate.setGate(3);
             voliInPartenza.add(partenza3);
 
-            // NUOVI VOLI IN PARTENZA
             Volo_partenza partenza4 = new Volo_partenza("Parigi ORY", "EasyJet");
             partenza4.setCodice("U24321");
             partenza4.setData(LocalDate.parse("2025-05-21"));
@@ -351,11 +340,11 @@ public class AppController {
 
             Volo_partenza partenza6 = new Volo_partenza("Berlino BER", "Lufthansa");
             partenza6.setCodice("LH1899");
-            partenza6.setData(LocalDate.parse("2025-05-22")); // Giorno successivo
+            partenza6.setData(LocalDate.parse("2025-05-22"));
             partenza6.setOrarioPrevisto(LocalTime.parse("09:20:00"));
-            partenza6.setStato(Stato_del_volo.rinviato); // Rinviato al giorno dopo
-            partenza6.setData(LocalDate.parse("2025-05-23")); // Data effettiva del rinvio
-            partenza6.setOrarioPrevisto(LocalTime.parse("10:00:00")); // Orario effettivo del rinvio
+            partenza6.setStato(Stato_del_volo.rinviato);
+            partenza6.setData(LocalDate.parse("2025-05-23"));
+            partenza6.setOrarioPrevisto(LocalTime.parse("10:00:00"));
             partenza6.gate.setGate(6);
             voliInPartenza.add(partenza6);
 
@@ -385,9 +374,8 @@ public class AppController {
         p1.getPasseggero().setSsn("RSSMRA80A01H501A");
         p1.getPasseggero().setEmail("mario.rossi@example.com");
         p1.getPasseggero().setTelefono("3331234567");
-        // Ensure there's a bookable departure flight
         Volo voloPerP1 = voliInPartenza.stream().filter(v -> v.getStato() == Stato_del_volo.in_orario || v.getStato() == Stato_del_volo.in_ritardo || v.getStato() == Stato_del_volo.rinviato).findFirst().orElse(null);
-        if (voloPerP1 == null && !voliInPartenza.isEmpty()) voloPerP1 = voliInPartenza.get(0); // Fallback, might not be bookable
+        if (voloPerP1 == null && !voliInPartenza.isEmpty()) voloPerP1 = voliInPartenza.get(0);
 
         if (voloPerP1 != null) {
             p1.setCodiceVolo(voloPerP1.getCodice());
@@ -406,14 +394,14 @@ public class AppController {
         p2.getPasseggero().setTelefono("3471122334");
 
         Volo voloPerP2 = voliInArrivo.stream().filter(v -> v.getStato() == Stato_del_volo.in_orario || v.getStato() == Stato_del_volo.in_ritardo).findFirst().orElse(null);
-        if (voloPerP2 == null && !voliInArrivo.isEmpty()) voloPerP2 = voliInArrivo.get(0); // Fallback
+        if (voloPerP2 == null && !voliInArrivo.isEmpty()) voloPerP2 = voliInArrivo.get(0);
 
         if (voloPerP2 != null) {
             p2.setCodiceVolo(voloPerP2.getCodice());
             p2.getPasseggero().setPosto("4D");
             p2.updateAssicurazione();
             prenotazioni.add(p2);
-        } else if (voloPerP1 != null) { // Fallback to a departure if no suitable arrival for example
+        } else if (voloPerP1 != null) {
             p2.setCodiceVolo(voloPerP1.getCodice());
             p2.getPasseggero().setPosto("4D");
             p2.updateAssicurazione();
@@ -424,11 +412,11 @@ public class AppController {
         Volo voloPerP3 = null;
         for(Volo v : voliInPartenza){
             if((v.getStato() == Stato_del_volo.in_orario || v.getStato() == Stato_del_volo.rinviato || v.getStato() == Stato_del_volo.in_ritardo) && (voloPerP1 == null || !v.getCodice().equals(voloPerP1.getCodice())) ){
-                voloPerP3 = v; // Find a *different* bookable flight
+                voloPerP3 = v;
                 break;
             }
         }
-        if(voloPerP3 == null && voliInPartenza.size() > 1 && (voloPerP1 == null || !voliInPartenza.get(1).getCodice().equals(voloPerP1.getCodice()))) { // Fallback to second flight if available and different
+        if(voloPerP3 == null && voliInPartenza.size() > 1 && (voloPerP1 == null || !voliInPartenza.get(1).getCodice().equals(voloPerP1.getCodice()))) {
             voloPerP3 = voliInPartenza.get(1);
         }
 

@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-// Imports from the model package
 import model.*;
 
 public class MainFrame extends JFrame {
@@ -23,12 +22,11 @@ public class MainFrame extends JFrame {
     private JPanel mainPanel;
     private JTextField txtNomeUtente;
     private JPasswordField txtPassword;
-    private String ruoloUtente = "Utente"; // Ruolo di default
+    private String ruoloUtente = "Utente";
 
-    // Updated to use model classes
-    private List<model.Volo> voliInArrivo = new ArrayList<>();
-    private List<model.Volo> voliInPartenza = new ArrayList<>();
-    private List<model.Prenotazione> prenotazioni = new ArrayList<>();
+    private List<Volo> voliInArrivo = new ArrayList<>();
+    private List<Volo> voliInPartenza = new ArrayList<>();
+    private List<Prenotazione> prenotazioni = new ArrayList<>();
 
     private JTextField adminSearchNomeField;
     private JTextField adminSearchCognomeField;
@@ -40,16 +38,14 @@ public class MainFrame extends JFrame {
     private JComboBox<String> adminCreaVoloTipo;
     private JComboBox<String> adminCreaVoloStatoComboBox;
 
-    // Stati Volo Permessi (for UI display and selection)
     private final String[] STATI_VOLO_DISPLAY = {"In Orario", "In Ritardo", "Cancellato", "Atterrato", "Rinviato"};
 
 
     private static final int NUM_FILE_SEDILI = 5;
     private static final char ULTIMA_LETTERA_SEDİLE = 'D';
 
-    // Formatters for date and time
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE; // YYYY-MM-DD
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME; // HH:MM or HH:MM:SS
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME;
 
     public MainFrame() {
         setTitle("Gestione Aeroporto");
@@ -73,9 +69,8 @@ public class MainFrame extends JFrame {
         cardLayout.show(mainPanel, "Volo");
     }
 
-    // Helper to map display string to Stato_del_volo enum
     private Stato_del_volo mapStringToStatoDelVolo(String statoStr) {
-        if (statoStr == null) return Stato_del_volo.in_orario; // Default
+        if (statoStr == null) return Stato_del_volo.in_orario;
         switch (statoStr) {
             case "In Orario": return Stato_del_volo.in_orario;
             case "In Ritardo": return Stato_del_volo.in_ritardo;
@@ -86,7 +81,6 @@ public class MainFrame extends JFrame {
         }
     }
 
-    // Helper to map Stato_del_volo enum to display string
     private String mapStatoDelVoloToString(Stato_del_volo stato) {
         if (stato == null) return "N/D";
         switch (stato) {
@@ -136,7 +130,7 @@ public class MainFrame extends JFrame {
                     int selectedRowInView = sourceTable.getSelectedRow();
                     if (selectedRowInView >= 0) {
                         int modelRow = sourceTable.convertRowIndexToModel(selectedRowInView);
-                        model.Volo voloSelezionato;
+                        Volo voloSelezionato;
                         if (sourceTable.getModel() == modelArrivo) {
                             if(modelRow < voliInArrivo.size()) voloSelezionato = voliInArrivo.get(modelRow); else return;
                         } else if (sourceTable.getModel() == modelPartenza) {
@@ -145,7 +139,6 @@ public class MainFrame extends JFrame {
                             return;
                         }
 
-                        // Check if flight is eligible for booking
                         Stato_del_volo statoVolo = voloSelezionato.getStato();
                         boolean canBook = true;
                         String reason = "";
@@ -157,7 +150,6 @@ public class MainFrame extends JFrame {
                             canBook = false;
                             reason = "è già atterrato";
                         } else if (sourceTable.getModel() == modelPartenza) {
-                            // For departure flights, can only book if it's in_orario, in_ritardo, or rinviato
                             if (!(statoVolo == Stato_del_volo.in_orario ||
                                     statoVolo == Stato_del_volo.in_ritardo ||
                                     statoVolo == Stato_del_volo.rinviato)) {
@@ -182,10 +174,10 @@ public class MainFrame extends JFrame {
                             if(ruoloUtente.equals("Amministratore") && adminSearchNomeField != null) {
                                 aggiornaVistaAdminPrenotazioni(adminSearchNomeField.getText(), adminSearchCognomeField.getText());
                             }
-                            model.Prenotazione prenEffettuata = pDialog.getPrenotazione();
+                            Prenotazione prenEffettuata = pDialog.getPrenotazione();
                             JOptionPane.showMessageDialog(MainFrame.this,
                                     "Prenotazione effettuata con successo per " + prenEffettuata.getPasseggero().getNome() + " " + prenEffettuata.getPasseggero().getCognome() +
-                                            "\nPosto: " + pDialog.getPostoAttualmenteSelezionato() + // Display string seat
+                                            "\nPosto: " + pDialog.getPostoAttualmenteSelezionato() +
                                             (prenEffettuata.isBagaglio() ? "\nCon Bagaglio" : "") +
                                             (prenEffettuata.isAssicurazione() ? "\nCon Assicurazione" : ""),
                                     "Prenotazione Confermata", JOptionPane.INFORMATION_MESSAGE);
@@ -238,13 +230,13 @@ public class MainFrame extends JFrame {
         updateVoloPanelForRole();
     }
 
-    private Object[][] getDatiVoli(List<model.Volo> voli) {
+    private Object[][] getDatiVoli(List<Volo> voli) {
         Object[][] dati = new Object[voli.size()][8];
         for (int i = 0; i < voli.size(); i++) {
-            model.Volo v = voli.get(i);
+            Volo v = voli.get(i);
             String gateDisplay = "N/A";
-            if (v instanceof model.Volo_partenza) {
-                model.Volo_partenza vp = (model.Volo_partenza) v;
+            if (v instanceof Volo_partenza) {
+                Volo_partenza vp = (Volo_partenza) v;
                 if (vp.gate != null && vp.gate.getGate() != 0) {
                     gateDisplay = String.valueOf(vp.gate.getGate());
                 }
@@ -298,7 +290,7 @@ public class MainFrame extends JFrame {
                 ruoloUtente = "Amministratore";
                 JOptionPane.showMessageDialog(this, "Accesso come Amministratore");
                 loginSuccess = true;
-            } else if (user.equals("utente") && pass.equals("utente")) { // Example generic user
+            } else if (user.equals("utente") && pass.equals("utente")) {
                 ruoloUtente = "Utente";
                 JOptionPane.showMessageDialog(this, "Accesso come Utente");
                 loginSuccess = true;
@@ -316,7 +308,7 @@ public class MainFrame extends JFrame {
                 }
 
                 mainPanel.add(createMainContentPanel(), targetPanelConstraint);
-                updateVoloPanelForRole(); //This refreshes the internal Volo panel too
+                updateVoloPanelForRole();
                 cardLayout.show(mainPanel, targetPanelConstraint);
             }
         });
@@ -337,10 +329,9 @@ public class MainFrame extends JFrame {
     }
 
     private void updateVoloPanelForRole() {
-        // Remove the old top-level "Volo" panel (the one shown when not logged in)
         Component oldInitialVoloPanel = null;
         if (mainPanel.getComponentCount() > 0) {
-            Component firstComp = mainPanel.getComponent(0); // Assuming it's the first
+            Component firstComp = mainPanel.getComponent(0);
             if (firstComp.getName() != null && firstComp.getName().startsWith("VoloPanel_Instance_")) {
                 oldInitialVoloPanel = firstComp;
             }
@@ -348,11 +339,9 @@ public class MainFrame extends JFrame {
         if(oldInitialVoloPanel != null) {
             mainPanel.remove(oldInitialVoloPanel);
         }
-        // Add a fresh one at index 0
         mainPanel.add(createVoloPanel(), "Volo", 0);
 
 
-        // If logged in, also update the "Volo" panel inside the MainContainer's CardLayout
         Component mainContentWrapper = findComponentByName(mainPanel, "MainContainer");
         if (mainContentWrapper instanceof Container) {
             JPanel contentPanelCards = (JPanel) findComponentByName((Container) mainContentWrapper, "MainContentPanel_Card");
@@ -361,10 +350,10 @@ public class MainFrame extends JFrame {
                 if (oldVoloPanelInterno != null) {
                     contentPanelCards.remove(oldVoloPanelInterno);
                 }
-                JPanel nuovoVoloPanelInterno = createVoloPanel(); // Create a new instance
+                JPanel nuovoVoloPanelInterno = createVoloPanel();
                 nuovoVoloPanelInterno.setName("VoloPanel_Interno");
-                setButtonVisibilityInPanel(nuovoVoloPanelInterno, "LoginButton_VoloPanel", false); // Hide login button inside
-                contentPanelCards.add(nuovoVoloPanelInterno, "Volo"); // Add it to the card layout for logged-in view
+                setButtonVisibilityInPanel(nuovoVoloPanelInterno, "LoginButton_VoloPanel", false);
+                contentPanelCards.add(nuovoVoloPanelInterno, "Volo");
             }
         }
         mainPanel.revalidate();
@@ -385,10 +374,9 @@ public class MainFrame extends JFrame {
         JPanel contentPanel = new JPanel(new CardLayout());
         contentPanel.setName("MainContentPanel_Card");
 
-        // Create the Volo panel that will be shown when logged in
         JPanel voliPanelInterno = createVoloPanel();
         voliPanelInterno.setName("VoloPanel_Interno");
-        setButtonVisibilityInPanel(voliPanelInterno, "LoginButton_VoloPanel", false); // Hide login button
+        setButtonVisibilityInPanel(voliPanelInterno, "LoginButton_VoloPanel", false);
 
         contentPanel.add(voliPanelInterno, "Volo");
         contentPanel.add(createMiePrenotazioniPanel(), "MiePrenotazioni");
@@ -396,7 +384,7 @@ public class MainFrame extends JFrame {
         contentPanel.add(createAdminCreaVoloPanel(), "AdminCreaVolo");
 
         btnVolo.addActionListener(e -> {
-            refreshVoloTables(); // Ensure tables are up-to-date
+            refreshVoloTables();
             switchContent(contentPanel, "Volo");
         });
 
@@ -422,16 +410,14 @@ public class MainFrame extends JFrame {
         btnAdminCreaVolo.addActionListener(e -> {
             if (ruoloUtente.equals("Amministratore")) {
                 if (adminCreaVoloTipo != null) {
-                    adminCreaVoloTipo.setSelectedIndex(0); // Default to "In Partenza"
-                    handleTipoVoloChange(); // Update fields based on type
+                    adminCreaVoloTipo.setSelectedIndex(0);
+                    handleTipoVoloChange();
                 }
                 if (adminCreaVoloStatoComboBox != null) {
-                    adminCreaVoloStatoComboBox.setSelectedItem("In Orario"); // Default state
+                    adminCreaVoloStatoComboBox.setSelectedItem("In Orario");
                 }
-                // Clear fields
                 if(adminCreaVoloCodice != null) adminCreaVoloCodice.setText("");
                 if(adminCreaVoloCompagnia != null) adminCreaVoloCompagnia.setText("");
-                // Origine/Destinazione are handled by handleTipoVoloChange
                 if(adminCreaVoloData != null) adminCreaVoloData.setText("");
                 if(adminCreaVoloOrario != null) adminCreaVoloOrario.setText("");
                 if(adminCreaVoloGate != null) adminCreaVoloGate.setText("");
@@ -444,22 +430,20 @@ public class MainFrame extends JFrame {
 
 
         btnLogout.addActionListener(e -> {
-            ruoloUtente = "Utente"; // Reset to default role
+            ruoloUtente = "Utente";
             txtNomeUtente.setText("");
             txtPassword.setText("");
 
-            // Remove the main content panel for logged-in users
             Component oldMainContainer = findComponentByName(mainPanel, "MainContainer");
             if (oldMainContainer != null) {
                 mainPanel.remove(oldMainContainer);
             }
-            // Add a placeholder for the "Main" card constraint
             JPanel placeholderMain = new JPanel();
-            placeholderMain.setName("MainContainer_Placeholder_After_Logout"); // Unique name
-            mainPanel.add(placeholderMain, "Main"); // Ensure this is the same constraint used at login
+            placeholderMain.setName("MainContainer_Placeholder_After_Logout");
+            mainPanel.add(placeholderMain, "Main");
 
-            updateVoloPanelForRole(); // This will recreate the initial Volo panel
-            cardLayout.show(mainPanel, "Volo"); // Show the initial Volo panel
+            updateVoloPanelForRole();
+            cardLayout.show(mainPanel, "Volo");
         });
 
         navBar.add(btnVolo);
@@ -474,7 +458,7 @@ public class MainFrame extends JFrame {
 
         container.add(navBar, BorderLayout.NORTH);
         container.add(contentPanel, BorderLayout.CENTER);
-        ((CardLayout)contentPanel.getLayout()).show(contentPanel, "Volo"); // Default to Volo view
+        ((CardLayout)contentPanel.getLayout()).show(contentPanel, "Volo");
         return container;
     }
 
@@ -486,14 +470,12 @@ public class MainFrame extends JFrame {
 
             if (contentPanelComp instanceof JPanel) {
                 JPanel contentPanel = (JPanel) contentPanelComp;
-                // Remove the old panel if it exists
                 Component currentPrenotazioniPanel = findComponentByName(contentPanel, "MiePrenotazioniPanel_Internal");
                 if (currentPrenotazioniPanel != null) {
                     contentPanel.remove(currentPrenotazioniPanel);
                 }
-                // Add the new one
-                JPanel nuovoPanelPrenotazioni = createMiePrenotazioniPanel(); //This will build with current data
-                contentPanel.add(nuovoPanelPrenotazioni, "MiePrenotazioni"); //Ensure constraint matches switchContent
+                JPanel nuovoPanelPrenotazioni = createMiePrenotazioniPanel();
+                contentPanel.add(nuovoPanelPrenotazioni, "MiePrenotazioni");
                 contentPanel.revalidate();
                 contentPanel.repaint();
             }
@@ -503,24 +485,19 @@ public class MainFrame extends JFrame {
 
     private JPanel createMiePrenotazioniPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setName("MiePrenotazioniPanel_Internal"); // For consistent removal/update
+        panel.setName("MiePrenotazioniPanel_Internal");
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Assuming txtNomeUtente holds the logged-in user's identifier for their bookings
-        // For simplicity, we'll filter by the entered username if it's "utente"
-        // A real app would use a user ID or a more robust PII.
         String nomePasseggeroLoggato = (txtNomeUtente != null && "utente".equalsIgnoreCase(txtNomeUtente.getText()) && ruoloUtente.equals("Utente"))
-                ? "utente" // Hardcoded for "utente Test" example
-                : ""; // No specific user otherwise, or adapt if login stores more details
+                ? "utente"
+                : "";
 
         JLabel titleLabel = new JLabel("Le Mie Prenotazioni" + (!nomePasseggeroLoggato.isEmpty() ? " (Passeggero: " + nomePasseggeroLoggato + ")" : ""), SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
         panel.add(titleLabel, BorderLayout.NORTH);
 
-        List<model.Prenotazione> prenotazioniUtente = new ArrayList<>();
+        List<Prenotazione> prenotazioniUtente = new ArrayList<>();
         if (!nomePasseggeroLoggato.isEmpty()) {
-            // This filter is very basic. A real app would link prenotazioni to a userId.
-            // Here, we assume 'nomePasseggeroLoggato' is the first name of the passenger.
             final String filterName = nomePasseggeroLoggato;
             prenotazioniUtente = prenotazioni.stream()
                     .filter(p -> p.getPasseggero() != null && filterName.equalsIgnoreCase(p.getPasseggero().getNome()))
@@ -540,9 +517,9 @@ public class MainFrame extends JFrame {
             Object[][] dati = new Object[prenotazioniUtente.size()][colonne.length];
 
             for (int i = 0; i < prenotazioniUtente.size(); i++) {
-                model.Prenotazione p = prenotazioniUtente.get(i);
-                model.Passeggero pass = p.getPasseggero();
-                model.Volo voloAssociato = findVoloByCodice(p.getCodiceVolo());
+                Prenotazione p = prenotazioniUtente.get(i);
+                Passeggero pass = p.getPasseggero();
+                Volo voloAssociato = findVoloByCodice(p.getCodiceVolo());
 
                 String origineDest = "N/D";
                 String dataVolo = "N/D";
@@ -557,7 +534,7 @@ public class MainFrame extends JFrame {
                         p.getCodiceVolo(),
                         origineDest,
                         dataVolo,
-                        String.valueOf(pass.getPosto()), // This is an int, might need better display if "1A" format stored elsewhere
+                        String.valueOf(pass.getPosto()),
                         p.isBagaglio() ? "Sì" : "No",
                         p.isAssicurazione() ? "Sì" : "No"
                 };
@@ -565,15 +542,14 @@ public class MainFrame extends JFrame {
             JTable tablePrenotazioni = new JTable(new DefaultTableModel(dati, colonne) {
                 @Override public boolean isCellEditable(int row, int column) { return false; }
             });
-            tablePrenotazioni.setAutoResizeMode(JTable.AUTO_RESIZE_OFF); // Adjust column widths as needed
-            // Example: tablePrenotazioni.getColumnModel().getColumn(0).setPreferredWidth(120);
+            tablePrenotazioni.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
             JScrollPane scrollPane = new JScrollPane(tablePrenotazioni);
             panel.add(scrollPane, BorderLayout.CENTER);
         }
         return panel;
     }
 
-    private model.Volo findVoloByCodice(String codiceVolo) {
+    private Volo findVoloByCodice(String codiceVolo) {
         if (codiceVolo == null) return null;
         return Stream.concat(voliInArrivo.stream(), voliInPartenza.stream())
                 .filter(v -> codiceVolo.equals(v.getCodice()))
@@ -605,30 +581,28 @@ public class MainFrame extends JFrame {
             @Override public boolean isCellEditable(int row, int column) { return false; }
         };
         adminPrenotazioniTable = new JTable(adminTableModel);
-        // Configure table properties as needed
         adminPrenotazioniTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        // Example: adminPrenotazioniTable.getColumnModel().getColumn(0).setPreferredWidth(130);
 
         JScrollPane scrollPane = new JScrollPane(adminPrenotazioniTable);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         panel.add(scrollPane, BorderLayout.CENTER);
-        aggiornaVistaAdminPrenotazioni("", ""); // Initial load
+        aggiornaVistaAdminPrenotazioni("", "");
         return panel;
     }
 
     private void aggiornaVistaAdminPrenotazioni(String nomeFilter, String cognomeFilter) {
         if (adminTableModel == null) return;
-        adminTableModel.setRowCount(0); // Clear existing rows
+        adminTableModel.setRowCount(0);
 
-        List<model.Prenotazione> filteredPrenotazioni = prenotazioni.stream()
+        List<Prenotazione> filteredPrenotazioni = prenotazioni.stream()
                 .filter(p -> p.getPasseggero() != null &&
                         (nomeFilter == null || nomeFilter.trim().isEmpty() || p.getPasseggero().getNome().toLowerCase().contains(nomeFilter.trim().toLowerCase())) &&
                         (cognomeFilter == null || cognomeFilter.trim().isEmpty() || p.getPasseggero().getCognome().toLowerCase().contains(cognomeFilter.trim().toLowerCase())))
                 .collect(Collectors.toList());
 
-        for (model.Prenotazione p : filteredPrenotazioni) {
-            model.Passeggero pass = p.getPasseggero();
-            model.Volo voloAssociato = findVoloByCodice(p.getCodiceVolo());
+        for (Prenotazione p : filteredPrenotazioni) {
+            Passeggero pass = p.getPasseggero();
+            Volo voloAssociato = findVoloByCodice(p.getCodiceVolo());
 
             String compagnia = "N/D";
             String origineDest = "N/D";
@@ -695,7 +669,7 @@ public class MainFrame extends JFrame {
 
         gbc.gridx = 0; gbc.gridy = y; gbc.fill = GridBagConstraints.NONE; panel.add(new JLabel("Stato Iniziale:"), gbc);
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloStatoComboBox = new JComboBox<>(STATI_VOLO_DISPLAY);
-        adminCreaVoloStatoComboBox.setSelectedItem("In Orario"); // Default
+        adminCreaVoloStatoComboBox.setSelectedItem("In Orario");
         panel.add(adminCreaVoloStatoComboBox, gbc);
         y++;
 
@@ -703,7 +677,7 @@ public class MainFrame extends JFrame {
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloGate = new JTextField(5); panel.add(adminCreaVoloGate, gbc);
         y++;
 
-        handleTipoVoloChange(); // Initial setup for Origine/Destinazione/Gate based on default type
+        handleTipoVoloChange();
 
         gbc.gridy = y;
         gbc.gridx = 0;
@@ -744,7 +718,6 @@ public class MainFrame extends JFrame {
 
                 LocalTime orario;
                 try {
-                    // Allow HH:MM or HH:MM:SS, parse to LocalTime which handles both
                     if (orarioStr.matches("\\d{2}:\\d{2}")) {
                         orario = LocalTime.parse(orarioStr + ":00", TIME_FORMATTER);
                     } else if (orarioStr.matches("\\d{2}:\\d{2}:\\d{2}")){
@@ -758,14 +731,14 @@ public class MainFrame extends JFrame {
                 }
                 Stato_del_volo statoEnum = mapStringToStatoDelVolo(statoDisplay);
 
-                model.Volo nuovoVolo;
+                Volo nuovoVolo;
                 if ("In Partenza".equals(tipo)) {
-                    if (!origine.equalsIgnoreCase("Napoli NAP")) { // Assuming fixed origin for departures
+                    if (!origine.equalsIgnoreCase("Napoli NAP")) {
                         JOptionPane.showMessageDialog(this, "Per i voli in partenza da questo aeroporto, l'origine è 'Napoli NAP'.", "Errore Input", JOptionPane.ERROR_MESSAGE);
-                        adminCreaVoloOrigine.setText("Napoli NAP"); // Correct it
+                        adminCreaVoloOrigine.setText("Napoli NAP");
                         return;
                     }
-                    model.Volo_partenza vp = new model.Volo_partenza(destinazione, compagnia);
+                    Volo_partenza vp = new Volo_partenza(destinazione, compagnia);
                     vp.setCodice(codice);
                     vp.setData(data);
                     vp.setOrarioPrevisto(orario);
@@ -778,33 +751,31 @@ public class MainFrame extends JFrame {
                     }
                     nuovoVolo = vp;
                     voliInPartenza.add(nuovoVolo);
-                } else { // In Arrivo
-                    if (!destinazione.equalsIgnoreCase("Napoli NAP")) { // Assuming fixed destination for arrivals
+                } else {
+                    if (!destinazione.equalsIgnoreCase("Napoli NAP")) {
                         JOptionPane.showMessageDialog(this, "Per i voli in arrivo a questo aeroporto, la destinazione è 'Napoli NAP'.", "Errore Input", JOptionPane.ERROR_MESSAGE);
-                        adminCreaVoloDestinazione.setText("Napoli NAP"); // Correct it
+                        adminCreaVoloDestinazione.setText("Napoli NAP");
                         return;
                     }
-                    model.Volo_arrivo va = new model.Volo_arrivo(origine, compagnia);
+                    Volo_arrivo va = new Volo_arrivo(origine, compagnia);
                     va.setCodice(codice);
                     va.setData(data);
                     va.setOrarioPrevisto(orario);
                     va.setStato(statoEnum);
-                    // Gate is not typically set for Volo_arrivo via this panel based on model.Gate being in Volo_partenza
                     nuovoVolo = va;
                     voliInArrivo.add(nuovoVolo);
                 }
 
                 JOptionPane.showMessageDialog(this, "Volo " + codice + " creato con successo!", "Volo Creato", JOptionPane.INFORMATION_MESSAGE);
 
-                // Clear form
                 adminCreaVoloCodice.setText(""); adminCreaVoloCompagnia.setText("");
                 adminCreaVoloData.setText(""); adminCreaVoloOrario.setText("");
                 adminCreaVoloGate.setText("");
-                adminCreaVoloTipo.setSelectedIndex(0); // Resets tipo, which triggers handleTipoVoloChange
+                adminCreaVoloTipo.setSelectedIndex(0);
                 adminCreaVoloStatoComboBox.setSelectedItem("In Orario");
 
 
-                refreshVoloTables(); // Update tables in Volo panel
+                refreshVoloTables();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Errore durante la creazione del volo: " + ex.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
                 ex.printStackTrace();
@@ -816,11 +787,10 @@ public class MainFrame extends JFrame {
 
     private void handleTipoVoloChange() {
         if (adminCreaVoloTipo == null || adminCreaVoloOrigine == null || adminCreaVoloDestinazione == null || adminCreaVoloGate == null) {
-            return; // Components not initialized yet
+            return;
         }
         String tipoSelezionato = (String) adminCreaVoloTipo.getSelectedItem();
         JLabel gateLabel = null;
-        // Find the Gate label to enable/disable it with the field
         for(Component comp : adminCreaVoloGate.getParent().getComponents()){
             if(comp instanceof JLabel && ((JLabel) comp).getText().equals("Gate:")){
                 gateLabel = (JLabel) comp;
@@ -829,7 +799,7 @@ public class MainFrame extends JFrame {
         }
 
         if ("In Partenza".equals(tipoSelezionato)) {
-            adminCreaVoloOrigine.setText("Napoli NAP"); // Default for this airport system
+            adminCreaVoloOrigine.setText("Napoli NAP");
             adminCreaVoloOrigine.setEditable(false);
             adminCreaVoloDestinazione.setText("");
             adminCreaVoloDestinazione.setEditable(true);
@@ -839,16 +809,16 @@ public class MainFrame extends JFrame {
         } else if ("In Arrivo".equals(tipoSelezionato)) {
             adminCreaVoloOrigine.setText("");
             adminCreaVoloOrigine.setEditable(true);
-            adminCreaVoloDestinazione.setText("Napoli NAP"); // Default for this airport system
+            adminCreaVoloDestinazione.setText("Napoli NAP");
             adminCreaVoloDestinazione.setEditable(false);
-            adminCreaVoloGate.setText(""); // Gate not applicable or managed differently for arrivals
+            adminCreaVoloGate.setText("");
             adminCreaVoloGate.setEditable(false);
             if(gateLabel != null) gateLabel.setEnabled(false);
             adminCreaVoloGate.setEnabled(false);
-        } else { // Should not happen with JComboBox
+        } else {
             adminCreaVoloOrigine.setEditable(true);
             adminCreaVoloDestinazione.setEditable(true);
-            adminCreaVoloGate.setEditable(true); // Default
+            adminCreaVoloGate.setEditable(true);
             if(gateLabel != null) gateLabel.setEnabled(true);
             adminCreaVoloGate.setEnabled(true);
         }
@@ -861,7 +831,6 @@ public class MainFrame extends JFrame {
 
     private void aggiungiEsempiVoli() {
         try {
-            // VOLI IN ARRIVO
             Volo_arrivo arrivo1 = new Volo_arrivo("Roma FCO", "Alitalia");
             arrivo1.setCodice("AZ204");
             arrivo1.setData(LocalDate.parse("2025-05-21"));
@@ -887,12 +856,11 @@ public class MainFrame extends JFrame {
             arrivo4.setCodice("LH1778");
             arrivo4.setData(LocalDate.parse("2025-05-21"));
             arrivo4.setOrarioPrevisto(LocalTime.parse("12:30:00"));
-            arrivo4.setStato(Stato_del_volo.in_ritardo); // Example: setRitardo(30) could also be used if base orario is 12:00
-            arrivo4.setRitardo(30); // Assuming orarioPrevisto is original, delay is added
+            arrivo4.setStato(Stato_del_volo.in_ritardo);
+            arrivo4.setRitardo(30);
             voliInArrivo.add(arrivo4);
 
 
-            // VOLI IN PARTENZA
             Volo_partenza partenza1 = new Volo_partenza("Roma FCO", "Alitalia");
             partenza1.setCodice("AZ205");
             partenza1.setData(LocalDate.parse("2025-05-21"));
@@ -911,7 +879,7 @@ public class MainFrame extends JFrame {
 
             Volo_partenza partenza3 = new Volo_partenza("Londra LHR", "British Airways");
             partenza3.setCodice("BA2609");
-            partenza3.setData(LocalDate.parse("2025-05-22")); // Different day
+            partenza3.setData(LocalDate.parse("2025-05-22"));
             partenza3.setOrarioPrevisto(LocalTime.parse("15:00:00"));
             partenza3.setStato(Stato_del_volo.rinviato);
             partenza3.gate.setGate(3);
@@ -919,7 +887,6 @@ public class MainFrame extends JFrame {
 
         } catch (DateTimeParseException e) {
             System.err.println("Error parsing date/time in example flights: " + e.getMessage());
-            // Handle exception, perhaps by not adding the problematic flight or logging
         }
     }
 
@@ -929,48 +896,43 @@ public class MainFrame extends JFrame {
             return;
         }
 
-        // Prenotazione 1 (Partenza)
-        model.Prenotazione p1 = new model.Prenotazione();
+        Prenotazione p1 = new Prenotazione();
         p1.getPasseggero().setNome("Mario");
         p1.getPasseggero().setCognome("Rossi");
         p1.getPasseggero().setSsn("RSSMRA80A01H501A");
         p1.getPasseggero().setEmail("mario.rossi@example.com");
         p1.getPasseggero().setTelefono("3331234567");
-        p1.setCodiceVolo(voliInPartenza.get(0).getCodice()); // Assumes AZ205
-        p1.getPasseggero().setPosto("1A"); // Example seat number
-        p1.updateAssicurazione(); // true
-        p1.updateBagaglio();    // true
+        p1.setCodiceVolo(voliInPartenza.get(0).getCodice());
+        p1.getPasseggero().setPosto("1A");
+        p1.updateAssicurazione();
+        p1.updateBagaglio();
         prenotazioni.add(p1);
 
-        // Prenotazione 2 (Utente "utente" per test MiePrenotazioni)
-        model.Prenotazione p2 = new model.Prenotazione();
-        p2.getPasseggero().setNome("utente"); // Matches the hardcoded name for login "utente"
+        Prenotazione p2 = new Prenotazione();
+        p2.getPasseggero().setNome("utente");
         p2.getPasseggero().setCognome("Test");
         p2.getPasseggero().setSsn("TSTUSR90C02H501C");
         p2.getPasseggero().setEmail("utente.test@example.com");
         p2.getPasseggero().setTelefono("3471122334");
-        if (!voliInArrivo.isEmpty()) { // Ensure there's an arrival flight
-            p2.setCodiceVolo(voliInArrivo.get(0).getCodice()); // Assumes AZ204
-        } else if (!voliInPartenza.isEmpty()) { // Fallback to a departure if no arrivals
+        if (!voliInArrivo.isEmpty()) {
+            p2.setCodiceVolo(voliInArrivo.get(0).getCodice());
+        } else if (!voliInPartenza.isEmpty()) {
             p2.setCodiceVolo(voliInPartenza.get(0).getCodice());
-        } else { return; } // No flights to book
-        p2.getPasseggero().setPosto("4D"); // Example seat number
-        p2.updateAssicurazione(); // true
-        // No bagaglio
+        } else { return; }
+        p2.getPasseggero().setPosto("4D");
+        p2.updateAssicurazione();
         prenotazioni.add(p2);
 
-        // Prenotazione 3 (Another for admin view)
-        if (voliInPartenza.size() > 1) { // Check if there's another departure flight
-            model.Volo voloPerP3 = null;
-            // Find a bookable flight for this example
-            for(model.Volo v : voliInPartenza){
+        if (voliInPartenza.size() > 1) {
+            Volo voloPerP3 = null;
+            for(Volo v : voliInPartenza){
                 if(v.getStato() == Stato_del_volo.in_orario || v.getStato() == Stato_del_volo.rinviato || v.getStato() == Stato_del_volo.in_ritardo){
                     voloPerP3 = v;
                     break;
                 }
             }
             if(voloPerP3 != null){
-                model.Prenotazione p3 = new model.Prenotazione();
+                Prenotazione p3 = new Prenotazione();
                 p3.getPasseggero().setNome("Laura");
                 p3.getPasseggero().setCognome("Bianchi");
                 p3.getPasseggero().setSsn("BNCLRA85M41H501B");
@@ -978,7 +940,7 @@ public class MainFrame extends JFrame {
                 p3.getPasseggero().setTelefono("3387654321");
                 p3.setCodiceVolo(voloPerP3.getCodice());
                 p3.getPasseggero().setPosto("2C");
-                p3.updateBagaglio(); // true
+                p3.updateBagaglio();
                 prenotazioni.add(p3);
             }
         }
@@ -1012,32 +974,30 @@ public class MainFrame extends JFrame {
         Component button = findComponentByName(panel, buttonName);
         if (button instanceof JButton) {
             button.setVisible(visible);
-            // Also ensure parent panel for button is visible if button itself is made visible
             if(visible && button.getParent()!=null && !button.getParent().isVisible()){
                 button.getParent().setVisible(true);
             }
-        } else if (button != null) { // Could be a panel containing the button
+        } else if (button != null) {
             button.setVisible(visible);
         }
     }
 
-    // Inner class PrenotazioneDialog (modified to use model classes)
     class PrenotazioneDialog extends JDialog {
-        private model.Volo voloDialogo; // Use model.Volo
-        private model.Prenotazione prenotazioneEffettuata; // Use model.Prenotazione
+        private Volo voloDialogo;
+        private Prenotazione prenotazioneEffettuata;
         private boolean confermata = false;
 
-        private JTextField txtNome, txtCognome, txtSSN, /*txtDataNascita,*/ txtEmail, txtTelefono; // DataNascita removed
+        private JTextField txtNome, txtCognome, txtSSN, txtEmail, txtTelefono;
         private JCheckBox chkBagaglio, chkAssicurazione;
         private JLabel lblPostoSelezionatoDisplay;
-        private String postoAttualmenteSelezionato = null; // e.g., "1A"
+        private String postoAttualmenteSelezionato = null;
         private Map<String, JButton> bottoniSediliMap = new HashMap<>();
 
 
-        public PrenotazioneDialog(Frame owner, model.Volo volo) { // Use model.Volo
+        public PrenotazioneDialog(Frame owner, Volo volo) {
             super(owner, "Dettagli Prenotazione Volo: " + volo.getCodice(), true);
             this.voloDialogo = volo;
-            setSize(Math.min(owner.getWidth() - 50, 600), Math.min(owner.getHeight() - 50, 530)); // Adjusted height
+            setSize(Math.min(owner.getWidth() - 50, 600), Math.min(owner.getHeight() - 50, 530));
             setLocationRelativeTo(owner);
             setLayout(new BorderLayout(10, 10));
             ((JPanel)getContentPane()).setBorder(new EmptyBorder(10,10,10,10));
@@ -1069,7 +1029,6 @@ public class MainFrame extends JFrame {
             txtNome = new JTextField(20);
             txtCognome = new JTextField(20);
             txtSSN = new JTextField(16);
-            // txtDataNascita = new JTextField(10); // Removed
             txtEmail = new JTextField(25);
             txtTelefono = new JTextField(15);
 
@@ -1083,9 +1042,6 @@ public class MainFrame extends JFrame {
             gbc.gridx = 0; gbc.gridy = y; panel.add(new JLabel("SSN/Codice Fiscale:"), gbc);
             gbc.gridx = 1; panel.add(txtSSN, gbc);
             y++;
-            // gbc.gridx = 0; gbc.gridy = y; panel.add(new JLabel("Data Nascita (GG/MM/AAAA):"), gbc); // Removed
-            // gbc.gridx = 1; panel.add(txtDataNascita, gbc); // Removed
-            // y++; // Removed
             gbc.gridx = 0; gbc.gridy = y; panel.add(new JLabel("Email:"), gbc);
             gbc.gridx = 1; panel.add(txtEmail, gbc);
             y++;
@@ -1100,36 +1056,9 @@ public class MainFrame extends JFrame {
             mappaPostiPanel.setBorder(BorderFactory.createTitledBorder("Mappa Sedili Aereo (Semplificata)"));
 
             List<Integer> postiOccupatiInt = new ArrayList<>();
-            // Get occupied POSTO IDs for this flight
-            for (model.Prenotazione pExisting : MainFrame.this.prenotazioni) {
-                if (pExisting.getCodiceVolo().equals(this.voloDialogo.getCodice())) {
-                    // Assuming pExisting.getPasseggero().getPosto() refers to a unique seat identifier (e.g. row number for simplicity here)
-                    // This logic needs to be robust depending on how seat IDs are structured.
-                    // For this simplified grid, we'll mark based on "row + col index" to simulate unique int IDs.
-                    // For now, we'll check string seat names if they were stored.
-                    // This part is tricky because model.Passeggero.posto is int, but grid is string.
-                    // We'll disable based on string name for visual, but actual int 'posto' in model is separate.
-                }
-            }
-            // This is a simplified representation. A real system would have a clearer mapping
-            // between the visual seat ("1A") and the integer `Passeggero.posto`.
-            // Here, we check if any *other* reservation (not the current one being made) for this flight
-            // has taken a seat that would map to the visual representation.
-            // This is complex without knowing exactly how `Passeggero.posto` (int) relates to "1A" (String).
-            // For now, we'll disable based on string name stored in previous *example* data, assuming it's unique.
-            // This needs a more robust solution in a real app.
             List<String> postiOccupatiString = new ArrayList<>();
-            for (model.Prenotazione pExisting : MainFrame.this.prenotazioni) {
+            for (Prenotazione pExisting : MainFrame.this.prenotazioni) {
                 if (pExisting.getCodiceVolo().equals(this.voloDialogo.getCodice())) {
-                    // We need a way to get the string representation of the seat from pExisting
-                    // Since model.Passeggero.posto is int, we can't directly get "1A".
-                    // This highlights a design consideration for how seats are managed.
-                    // For the demo, we'll assume the int 'posto' is the row number and we'd need a character.
-                    // This part cannot be fully implemented without more info on seat mapping.
-                    // We will simulate by checking if a seat *string* was stored somehow, or make all available if not.
-                    // For simplicity, we'll assume no string seat name is readily available from model.Prenotazione to disable specific "1A"
-                    // String seatName = convertIntPostoToString(pExisting.getPasseggero().getPosto());
-                    // if (seatName != null) postiOccupatiString.add(seatName);
                 }
             }
 
@@ -1145,10 +1074,7 @@ public class MainFrame extends JFrame {
                     btnPosto.setOpaque(true);
                     btnPosto.setBorderPainted(false);
 
-                    // Simplified: check against existing string-based seat names if we had them
-                    // Since model.Passeggero.posto is an int, this check is illustrative.
-                    // A real implementation would query availability based on the flight's seat map.
-                    if (postiOccupatiString.contains(nomePosto)) { // This list will likely be empty with current model
+                    if (postiOccupatiString.contains(nomePosto)) {
                         btnPosto.setBackground(Color.RED);
                         btnPosto.setEnabled(false);
                     } else {
@@ -1170,7 +1096,6 @@ public class MainFrame extends JFrame {
         private void selezionaPosto(String nomePosto) {
             if (postoAttualmenteSelezionato != null && bottoniSediliMap.containsKey(postoAttualmenteSelezionato)) {
                 JButton vecchioBottoneSelezionato = bottoniSediliMap.get(postoAttualmenteSelezionato);
-                // Only reset if it's not a disabled (red) seat, though disabled seats shouldn't trigger this
                 if(vecchioBottoneSelezionato.isEnabled()) {
                     vecchioBottoneSelezionato.setBackground(Color.GREEN.brighter());
                 }
@@ -1199,15 +1124,14 @@ public class MainFrame extends JFrame {
             String nome = txtNome.getText().trim();
             String cognome = txtCognome.getText().trim();
             String ssn = txtSSN.getText().trim();
-            // String dataNascita = txtDataNascita.getText().trim(); // Removed
             String email = txtEmail.getText().trim();
             String telefono = txtTelefono.getText().trim();
 
-            if (nome.isEmpty() || cognome.isEmpty() || ssn.isEmpty() /*|| dataNascita.isEmpty()*/ || email.isEmpty() || telefono.isEmpty()) {
+            if (nome.isEmpty() || cognome.isEmpty() || ssn.isEmpty() || email.isEmpty() || telefono.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Tutti i campi dei dati personali (incluso SSN) sono obbligatori.", "Dati Mancanti", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            if (ssn.length() < 5 ) { // Simplified SSN check for international, was 16.
+            if (ssn.length() < 5 ) {
                 JOptionPane.showMessageDialog(this, "Il formato SSN/Codice Fiscale non è valido.", "Errore Dati", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -1217,8 +1141,8 @@ public class MainFrame extends JFrame {
             }
             if (postoAttualmenteSelezionato == null) {
                 JOptionPane.showMessageDialog(this, "Devi selezionare un posto.", "Posto Mancante", JOptionPane.ERROR_MESSAGE);
-                if (getContentPane().getComponent(0) instanceof JTabbedPane) { // Ensure tabbedPane is the first component
-                    ((JTabbedPane) getContentPane().getComponent(0)).setSelectedIndex(1); // Switch to Scelta Posto tab
+                if (getContentPane().getComponent(0) instanceof JTabbedPane) {
+                    ((JTabbedPane) getContentPane().getComponent(0)).setSelectedIndex(1);
                 }
                 return;
             }
@@ -1226,7 +1150,7 @@ public class MainFrame extends JFrame {
             boolean bagaglio = chkBagaglio.isSelected();
             boolean assicurazione = chkAssicurazione.isSelected();
 
-            this.prenotazioneEffettuata = new model.Prenotazione();
+            this.prenotazioneEffettuata = new Prenotazione();
             this.prenotazioneEffettuata.getPasseggero().setNome(nome);
             this.prenotazioneEffettuata.getPasseggero().setCognome(cognome);
             this.prenotazioneEffettuata.getPasseggero().setSsn(ssn);
@@ -1234,15 +1158,12 @@ public class MainFrame extends JFrame {
             this.prenotazioneEffettuata.getPasseggero().setTelefono(telefono);
             this.prenotazioneEffettuata.setCodiceVolo(this.voloDialogo.getCodice());
 
-            // Set posto (int) from postoAttualmenteSelezionato (String "1A")
             String seatNumberInt = "";
             if (postoAttualmenteSelezionato != null && !postoAttualmenteSelezionato.isEmpty()) {
                 try {
-                    // Extract the number part of the seat string
                     seatNumberInt = (postoAttualmenteSelezionato.replaceAll("[^0-9]", ""));
                 } catch (NumberFormatException ex) {
                     System.err.println("Could not parse seat number from string: " + postoAttualmenteSelezionato);
-                    // Default to 0 or handle error
                 }
             }
             this.prenotazioneEffettuata.getPasseggero().setPosto(seatNumberInt);
@@ -1256,8 +1177,8 @@ public class MainFrame extends JFrame {
         }
 
         public boolean isPrenotazioneConfermata() { return confermata; }
-        public model.Prenotazione getPrenotazione() { return prenotazioneEffettuata; } // Returns model.Prenotazione
-        public String getPostoAttualmenteSelezionato() { return postoAttualmenteSelezionato; } // To get "1A" for display
+        public Prenotazione getPrenotazione() { return prenotazioneEffettuata; }
+        public String getPostoAttualmenteSelezionato() { return postoAttualmenteSelezionato; }
     }
 
     public static void main(String[] args) {
@@ -1269,7 +1190,6 @@ public class MainFrame extends JFrame {
                 }
             }
         } catch (Exception e) {
-            // Use the default L&F if Nimbus is not available
         }
         SwingUtilities.invokeLater(() -> {
             new MainFrame().setVisible(true);

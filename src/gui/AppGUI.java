@@ -1,7 +1,7 @@
-package gui; // Or your preferred package for GUI classes
+package gui;
 
-import controller.AppController; // Assuming AppController is in a 'controller' package
-import model.*; // Keep model imports
+import controller.AppController;
+import model.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -16,32 +16,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-// No need to import Collectors or Stream here if data processing is in Controller
 
 public class AppGUI extends JFrame {
 
-    private AppController controller; // Reference to the controller
+    private AppController controller;
 
     private CardLayout cardLayout;
-    private JPanel mainPanel; // The top-level panel with CardLayout
+    private JPanel mainPanel;
 
-    // Login Panel Components
     private JTextField txtNomeUtenteLogin;
     private JPasswordField txtPasswordLogin;
 
-    // Admin - Prenotazioni Panel Components
     private JTextField adminSearchNomeField;
     private JTextField adminSearchCognomeField;
     private JTable adminPrenotazioniTable;
     private DefaultTableModel adminTableModel;
 
-    // Admin - Crea Volo Panel Components
     private JTextField adminCreaVoloCodice, adminCreaVoloCompagnia, adminCreaVoloOrigine, adminCreaVoloDestinazione,
             adminCreaVoloData, adminCreaVoloOrario, adminCreaVoloGate;
     private JComboBox<String> adminCreaVoloTipo;
     private JComboBox<String> adminCreaVoloStatoComboBox;
 
-    // Constants for UI
     private final String[] STATI_VOLO_DISPLAY = {"In Orario", "In Ritardo", "Cancellato", "Atterrato", "Rinviato"};
     private static final int NUM_FILE_SEDILI = 5;
     private static final char ULTIMA_LETTERA_SEDILE = 'D';
@@ -51,7 +46,7 @@ public class AppGUI extends JFrame {
 
     public AppGUI(AppController controller) {
         this.controller = controller;
-        this.controller.setGui(this); // Provide GUI reference to controller
+        this.controller.setGui(this);
 
         setTitle("Gestione Aeroporto");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -63,10 +58,8 @@ public class AppGUI extends JFrame {
         mainPanel.setName("MainCardPanel");
 
 
-        // Initial panels (before login)
-        mainPanel.add(createVoloPanel(false), "Volo_Initial"); // Panel for non-logged-in users
+        mainPanel.add(createVoloPanel(false), "Volo_Initial");
         mainPanel.add(createLoginPanel(), "Login");
-        // Placeholder for the main content area after login, to be replaced
         JPanel placeholderMain = new JPanel();
         placeholderMain.setName("MainContentArea_Placeholder");
         mainPanel.add(placeholderMain, "MainContentArea");
@@ -76,8 +69,6 @@ public class AppGUI extends JFrame {
         cardLayout.show(mainPanel, "Volo_Initial");
     }
 
-
-    // --- Panel Creation Methods ---
 
     private JPanel createVoloPanel(boolean loggedIn) {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
@@ -105,10 +96,9 @@ public class AppGUI extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (!"Utente".equals(controller.getRuoloUtente())) {
-                    if (!loggedIn) { // Only show login prompt if on initial view
+                    if (!loggedIn) {
                         mostraMessaggioInformativo("Devi accedere per prenotare un volo.", "Accesso Richiesto");
                     }
-                    // If logged in but not as "Utente", do nothing or show specific admin message
                     return;
                 }
 
@@ -152,17 +142,15 @@ public class AppGUI extends JFrame {
                     PrenotazioneDialog pDialog = new PrenotazioneDialog(AppGUI.this, voloSelezionato, controller);
                     pDialog.setVisible(true);
                     if (pDialog.isPrenotazioneConfermata()) {
-                        // Controller already added the booking if successful.
-                        // Now, update relevant views.
-                        aggiornaTabelleVoli(); // In case seat availability changed, though not directly shown
+                        aggiornaTabelleVoli();
                         if ("Utente".equals(controller.getRuoloUtente())) {
-                            aggiornaVistaMiePrenotazioni(); // Update the "Mie Prenotazioni" tab
+                            aggiornaVistaMiePrenotazioni();
                         }
                         if("Amministratore".equals(controller.getRuoloUtente()) && adminSearchNomeField != null) {
                             aggiornaVistaAdminPrenotazioni(adminSearchNomeField.getText(), adminSearchCognomeField.getText());
                         }
 
-                        Prenotazione prenEffettuata = pDialog.getPrenotazione(); // This comes from dialog's internal state after controller confirmed
+                        Prenotazione prenEffettuata = pDialog.getPrenotazione();
                         mostraMessaggioInformativo(
                                 "Prenotazione effettuata con successo per " + prenEffettuata.getPasseggero().getNome() + " " + prenEffettuata.getPasseggero().getCognome() +
                                         "\nPosto: " + pDialog.getPostoAttualmenteSelezionato() +
@@ -189,7 +177,7 @@ public class AppGUI extends JFrame {
         centerPanel.add(partenzePanel);
         panel.add(centerPanel, BorderLayout.CENTER);
 
-        if (!loggedIn) { // Only show login button on the initial, non-logged-in Volo panel
+        if (!loggedIn) {
             JButton btnLogin = new JButton("Accedi per Prenotare/Gestire");
             btnLogin.setName("LoginButton_VoloPanel_Initial");
             btnLogin.addActionListener(e -> cardLayout.show(mainPanel, "Login"));
@@ -234,12 +222,10 @@ public class AppGUI extends JFrame {
             if (loginSuccess) {
                 mostraMessaggioInformativo("Accesso come " + controller.getRuoloUtente(), "Accesso Effettuato");
 
-                // Remove old placeholder or previous main content
                 Component oldMainContentArea = findComponentByName(mainPanel, "MainContentArea_Placeholder");
                 if (oldMainContentArea == null) oldMainContentArea = findComponentByName(mainPanel, "MainContentArea_Actual");
                 if (oldMainContentArea != null) mainPanel.remove(oldMainContentArea);
 
-                // Add new main content panel for logged-in user
                 JPanel newMainContentArea = createMainContentPanelForLoggedInUser();
                 newMainContentArea.setName("MainContentArea_Actual");
                 mainPanel.add(newMainContentArea, "MainContentArea");
@@ -268,7 +254,7 @@ public class AppGUI extends JFrame {
 
     private JPanel createMainContentPanelForLoggedInUser() {
         JPanel container = new JPanel(new BorderLayout(0, 0));
-        container.setName("MainContentPanel_Container_LoggedIn"); // Name for the whole logged-in container
+        container.setName("MainContentPanel_Container_LoggedIn");
 
         JPanel navBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton btnVolo = new JButton("Visualizza Voli");
@@ -278,11 +264,9 @@ public class AppGUI extends JFrame {
         JButton btnLogout = new JButton("Logout");
 
         JPanel contentPanelCards = new JPanel(new CardLayout());
-        contentPanelCards.setName("InnerContent_CardPanel"); // Cards for different views post-login
+        contentPanelCards.setName("InnerContent_CardPanel");
 
-        // Create the Volo panel that will be shown when logged in
-        JPanel voliPanelInterno = createVoloPanel(true); // Pass true for logged-in version
-        // No need to set name again here if createVoloPanel does it
+        JPanel voliPanelInterno = createVoloPanel(true);
 
         contentPanelCards.add(voliPanelInterno, "Volo_LoggedIn_View");
         contentPanelCards.add(createMiePrenotazioniPanel(), "MiePrenotazioni_View");
@@ -292,7 +276,7 @@ public class AppGUI extends JFrame {
         CardLayout innerCardLayout = (CardLayout) contentPanelCards.getLayout();
 
         btnVolo.addActionListener(e -> {
-            aggiornaTabelleVoli(); // Ensure tables are up-to-date in the logged-in view
+            aggiornaTabelleVoli();
             innerCardLayout.show(contentPanelCards, "Volo_LoggedIn_View");
         });
 
@@ -317,7 +301,7 @@ public class AppGUI extends JFrame {
 
         btnAdminCreaVolo.addActionListener(e -> {
             if ("Amministratore".equals(controller.getRuoloUtente())) {
-                resetAdminCreaVoloForm(); // Clear and reset the form
+                resetAdminCreaVoloForm();
                 innerCardLayout.show(contentPanelCards, "AdminCreaVolo_View");
             } else {
                 mostraMessaggioWarn("Funzione disponibile solo per gli amministratori.", "Accesso Negato");
@@ -329,22 +313,18 @@ public class AppGUI extends JFrame {
             txtNomeUtenteLogin.setText("");
             txtPasswordLogin.setText("");
 
-            // Remove the current logged-in main content area
             Component currentMainContent = findComponentByName(mainPanel, "MainContentArea_Actual");
             if (currentMainContent != null) {
                 mainPanel.remove(currentMainContent);
             }
-            // Add back a placeholder (or directly switch to Volo_Initial)
             JPanel placeholderMain = new JPanel();
-            placeholderMain.setName("MainContentArea_Placeholder"); // Reuse name for consistency if needed
+            placeholderMain.setName("MainContentArea_Placeholder");
             mainPanel.add(placeholderMain, "MainContentArea");
 
 
-            // Refresh the initial Volo panel (it might have been removed or become stale)
-            // To be safe, remove and re-add the initial Volo panel
             Component oldInitialVolo = findComponentByName(mainPanel, "VoloPanel_Initial_Instance");
             if(oldInitialVolo != null) mainPanel.remove(oldInitialVolo);
-            mainPanel.add(createVoloPanel(false), "Volo_Initial", 0); // Add at specific index if needed
+            mainPanel.add(createVoloPanel(false), "Volo_Initial", 0);
 
             cardLayout.show(mainPanel, "Volo_Initial");
             mainPanel.revalidate();
@@ -352,7 +332,6 @@ public class AppGUI extends JFrame {
         });
 
         navBar.add(btnVolo);
-        // Visibility based on role
         btnMiePrenotazioni.setVisible("Utente".equals(controller.getRuoloUtente()));
         btnAdminCercaPrenotazioni.setVisible("Amministratore".equals(controller.getRuoloUtente()));
         btnAdminCreaVolo.setVisible("Amministratore".equals(controller.getRuoloUtente()));
@@ -364,7 +343,7 @@ public class AppGUI extends JFrame {
 
         container.add(navBar, BorderLayout.NORTH);
         container.add(contentPanelCards, BorderLayout.CENTER);
-        innerCardLayout.show(contentPanelCards, "Volo_LoggedIn_View"); // Default to Volo view after login
+        innerCardLayout.show(contentPanelCards, "Volo_LoggedIn_View");
         return container;
     }
 
@@ -374,7 +353,7 @@ public class AppGUI extends JFrame {
         panel.setName("MiePrenotazioniPanel_Internal");
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        String nomePasseggeroLoggato = controller.getNomeUtenteLoggato(); // Get from controller
+        String nomePasseggeroLoggato = controller.getNomeUtenteLoggato();
 
         JLabel titleLabel = new JLabel("Le Mie Prenotazioni" + (!nomePasseggeroLoggato.isEmpty() ? " (Passeggero: " + nomePasseggeroLoggato + ")" : ""), SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
@@ -454,7 +433,7 @@ public class AppGUI extends JFrame {
         JScrollPane scrollPane = new JScrollPane(adminPrenotazioniTable);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         panel.add(scrollPane, BorderLayout.CENTER);
-        aggiornaVistaAdminPrenotazioni("", ""); // Initial load
+        aggiornaVistaAdminPrenotazioni("", "");
         return panel;
     }
 
@@ -507,7 +486,7 @@ public class AppGUI extends JFrame {
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; adminCreaVoloGate = new JTextField(5); panel.add(adminCreaVoloGate, gbc);
         y++;
 
-        handleAdminCreaVoloTipoChange(); // Initial setup
+        handleAdminCreaVoloTipoChange();
 
         gbc.gridy = y; gbc.gridx = 0; gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.NONE;
@@ -523,44 +502,30 @@ public class AppGUI extends JFrame {
             );
             if (success) {
                 resetAdminCreaVoloForm();
-                aggiornaTabelleVoli(); // Update flight tables in all relevant views
+                aggiornaTabelleVoli();
             }
-            // Error messages handled by controller via mostraMessaggioErrore
         });
         panel.add(btnCrea, gbc);
         return panel;
     }
 
-    // --- UI Update and Helper Methods ---
 
     public void aggiornaTabelleVoli() {
-        // This method needs to find the JTables in *both* Volo_Initial and Volo_LoggedIn_View
-        // and update their models. This can be complex due to panel recreation.
-        // A more robust way is to ensure that whenever a Volo panel is shown, it's recreated or its table models are explicitly updated.
 
-        // For simplicity, let's assume we rebuild the relevant visible Volo panel
-        // or at least its tables.
         Component visibleCardInMain = getCurrentVisibleCard(mainPanel);
         if (visibleCardInMain != null) {
             if ("Volo_Initial".equals(visibleCardInMain.getName())) {
-                // Rebuild or update Volo_Initial's tables
-                // This might involve removing and re-adding the panel if it's the easiest way
                 mainPanel.remove(visibleCardInMain);
-                mainPanel.add(createVoloPanel(false), "Volo_Initial"); // Ensure correct constraint and position
-                cardLayout.show(mainPanel, "Volo_Initial"); // Reshow it
+                mainPanel.add(createVoloPanel(false), "Volo_Initial");
+                cardLayout.show(mainPanel, "Volo_Initial");
             } else if ("MainContentArea_Actual".equals(visibleCardInMain.getName())) {
-                // If the logged-in area is visible, update its internal Volo panel
                 JPanel mainContentActual = (JPanel) visibleCardInMain;
                 JPanel innerContentCards = (JPanel) findComponentByName(mainContentActual, "InnerContent_CardPanel");
                 if (innerContentCards != null) {
-                    // Find the Volo_LoggedIn_View and update its tables
                     Component voloLoggedInComp = findComponentByName(innerContentCards, "VoloPanel_LoggedIn");
                     if (voloLoggedInComp instanceof JPanel) {
-                        // To refresh its tables, we might need to replace it or update its models directly
-                        // Safest is often to replace the component within the card layout
                         innerContentCards.remove(voloLoggedInComp);
                         innerContentCards.add(createVoloPanel(true), "Volo_LoggedIn_View");
-                        // If it was the visible card, re-show it. Otherwise, it'll update when next shown.
                         Component currentInnerCard = getCurrentVisibleCard(innerContentCards);
                         if (currentInnerCard != null && "VoloPanel_LoggedIn".equals(currentInnerCard.getName())) {
                             ((CardLayout)innerContentCards.getLayout()).show(innerContentCards, "Volo_LoggedIn_View");
@@ -575,22 +540,17 @@ public class AppGUI extends JFrame {
 
 
     private void aggiornaVistaMiePrenotazioni() {
-        // Find the "MainContentArea_Actual" panel
         JPanel mainContentActual = (JPanel) findComponentByName(mainPanel, "MainContentArea_Actual");
         if (mainContentActual != null) {
             JPanel innerContentCards = (JPanel) findComponentByName(mainContentActual, "InnerContent_CardPanel");
             if (innerContentCards != null) {
-                // Remove old "MiePrenotazioni_View"
                 Component oldMiePrenotazioniPanel = findComponentByName(innerContentCards, "MiePrenotazioniPanel_Internal");
                 if (oldMiePrenotazioniPanel != null) {
                     innerContentCards.remove(oldMiePrenotazioniPanel);
                 }
-                // Add new one
                 innerContentCards.add(createMiePrenotazioniPanel(), "MiePrenotazioni_View");
                 innerContentCards.revalidate();
                 innerContentCards.repaint();
-                // If it's the currently shown card, it will update.
-                // If not, it will be updated when `show` is called next time for this card.
             }
         }
     }
@@ -635,7 +595,7 @@ public class AppGUI extends JFrame {
                     v.getCodice(), v.getCompagniaAerea(), v.getOrigine(), v.getDestinazione(),
                     v.getData() != null ? v.getData().format(DATE_FORMATTER) : "N/D",
                     v.getOrarioPrevisto() != null ? v.getOrarioPrevisto().format(TIME_FORMATTER) : "N/D",
-                    controller.mapStatoDelVoloToString(v.getStato()), // Use controller's mapping
+                    controller.mapStatoDelVoloToString(v.getStato()),
                     gateDisplay
             };
         }
@@ -681,9 +641,9 @@ public class AppGUI extends JFrame {
         if(adminCreaVoloOrario != null) adminCreaVoloOrario.setText("");
         if(adminCreaVoloGate != null) adminCreaVoloGate.setText("");
         if (adminCreaVoloTipo != null) {
-            adminCreaVoloTipo.setSelectedIndex(0); // This triggers handleAdminCreaVoloTipoChange
+            adminCreaVoloTipo.setSelectedIndex(0);
         } else {
-            handleAdminCreaVoloTipoChange(); // Call manually if not triggered
+            handleAdminCreaVoloTipoChange();
         }
         if (adminCreaVoloStatoComboBox != null) {
             adminCreaVoloStatoComboBox.setSelectedItem("In Orario");
@@ -701,7 +661,6 @@ public class AppGUI extends JFrame {
         return null;
     }
 
-    // --- JOptionPane Wrappers for easier testing/mocking if needed ---
     public void mostraMessaggioInformativo(String messaggio, String titolo) {
         JOptionPane.showMessageDialog(this, messaggio, titolo, JOptionPane.INFORMATION_MESSAGE);
     }
@@ -711,13 +670,11 @@ public class AppGUI extends JFrame {
     public void mostraMessaggioWarn(String messaggio, String titolo) {
         JOptionPane.showMessageDialog(this, messaggio, titolo, JOptionPane.WARNING_MESSAGE);
     }
-    // For dialog specific messages
     public void mostraMessaggioErroreDialogo(String messaggio, String titolo) {
-        JOptionPane.showMessageDialog(this, messaggio, titolo, JOptionPane.ERROR_MESSAGE); // 'this' refers to AppGUI frame
+        JOptionPane.showMessageDialog(this, messaggio, titolo, JOptionPane.ERROR_MESSAGE);
     }
 
 
-    // --- Component Traversal Helpers (from original MainFrame) ---
     private Component getCurrentVisibleCard(JPanel cardPanel) {
         for (Component comp : cardPanel.getComponents()) {
             if (comp.isVisible()) return comp;
@@ -738,11 +695,10 @@ public class AppGUI extends JFrame {
     }
 
 
-    // --- Inner class PrenotazioneDialog (Dialog for booking) ---
     class PrenotazioneDialog extends JDialog {
         private Volo voloDialogo;
-        private AppController controllerDialog; // Controller reference
-        private Prenotazione prenotazioneDaConfermare; // Holds the booking data before final confirmation
+        private AppController controllerDialog;
+        private Prenotazione prenotazioneDaConfermare;
         private boolean confermata = false;
 
         private JTextField txtNome, txtCognome, txtSSN, txtEmail, txtTelefono;
@@ -754,8 +710,8 @@ public class AppGUI extends JFrame {
         public PrenotazioneDialog(Frame owner, Volo volo, AppController controller) {
             super(owner, "Dettagli Prenotazione Volo: " + volo.getCodice(), true);
             this.voloDialogo = volo;
-            this.controllerDialog = controller; // Use the passed controller
-            this.prenotazioneDaConfermare = new Prenotazione(); // Initialize a temporary booking object
+            this.controllerDialog = controller;
+            this.prenotazioneDaConfermare = new Prenotazione();
             this.prenotazioneDaConfermare.setCodiceVolo(volo.getCodice());
 
 
@@ -774,7 +730,6 @@ public class AppGUI extends JFrame {
             JButton btnConferma = new JButton("Conferma Prenotazione");
             btnConferma.addActionListener(e -> {
                 if (validaDatiPrenotazione()) {
-                    // All data seems okay, try to create through controller
                     boolean success = controllerDialog.creaNuovaPrenotazione(
                             this.voloDialogo,
                             txtNome.getText().trim(), txtCognome.getText().trim(), txtSSN.getText().trim(),
@@ -784,9 +739,6 @@ public class AppGUI extends JFrame {
                     );
                     if (success) {
                         this.confermata = true;
-                        // Populate prenotazioneDaConfermare with final details for getPrenotazione() if needed by caller.
-                        // This is a bit redundant if controller handles adding it to the main list.
-                        // The main purpose is to signal success and provide data for the confirmation message.
                         Passeggero pTemp = new Passeggero();
                         pTemp.setNome(txtNome.getText().trim());
                         pTemp.setCognome(txtCognome.getText().trim());
@@ -797,7 +749,6 @@ public class AppGUI extends JFrame {
 
                         dispose();
                     } else {
-                        // Error message already shown by controller via AppGUI.mostraMessaggioErroreDialogo
                     }
                 }
             });
@@ -819,7 +770,7 @@ public class AppGUI extends JFrame {
                 JOptionPane.showMessageDialog(this, "Tutti i campi dei dati personali (incluso SSN) sono obbligatori.", "Dati Mancanti", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
-            if (ssn.length() < 5 ) { // Simplified
+            if (ssn.length() < 5 ) {
                 JOptionPane.showMessageDialog(this, "Il formato SSN/Codice Fiscale non è valido.", "Errore Dati", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
@@ -929,7 +880,6 @@ public class AppGUI extends JFrame {
     }
 
 
-    // --- Main Method (Entry Point) ---
     public static void main(String[] args) {
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -939,7 +889,6 @@ public class AppGUI extends JFrame {
                 }
             }
         } catch (Exception e) {
-            // Use default L&F
         }
         SwingUtilities.invokeLater(() -> {
             AppController controller = new AppController();
