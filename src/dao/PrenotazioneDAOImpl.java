@@ -14,7 +14,6 @@ public class PrenotazioneDAOImpl implements PrenotazioneDAO {
 
     @Override
     public boolean creaPrenotazione(Prenotazione prenotazione) {
-        // Prima salviamo il passeggero, nel caso non esista
         passeggeroDAO.save(prenotazione.getPasseggero());
 
         String sql = "INSERT INTO Prenotazioni (codice_volo_fk, ssn_passeggero_fk, posto, assicurazione, bagaglio) VALUES (?, ?, ?, ?, ?)";
@@ -34,15 +33,12 @@ public class PrenotazioneDAOImpl implements PrenotazioneDAO {
 
     @Override
     public List<Prenotazione> getPrenotazioniPerUtente(String nomeUtente) {
-        // Questa logica va adattata: l'utente loggato dovrebbe avere un ID o SSN univoco.
-        // Usare il nome è rischioso. Per ora, seguiamo la logica originale.
         return getPrenotazioniFiltrateAdmin(nomeUtente, "");
     }
 
     @Override
     public List<Prenotazione> getPrenotazioniFiltrateAdmin(String nomeFilter, String cognomeFilter) {
         List<Prenotazione> prenotazioni = new ArrayList<>();
-        // Query che unisce Prenotazioni e Passeggeri
         String sql = "SELECT * FROM Prenotazioni pr JOIN Passeggeri p ON pr.ssn_passeggero_fk = p.ssn WHERE LOWER(p.nome) LIKE ? AND LOWER(p.cognome) LIKE ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
