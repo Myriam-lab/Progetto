@@ -1,7 +1,7 @@
 package model;
 
 public class Utente {
-    private String login;
+    private final String login;
     private String password;
 
     public Utente(String login, String password) {

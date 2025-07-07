@@ -147,7 +147,7 @@ public class Amministratore_sistema extends Utente {
                 case 4: {
                     System.out.println("(1) Cancellato (2) Rinviato (3) in ritardo (4) in orario (5) Atterrato");
                     int scelta2 = sc.nextInt();
-                    sc.nextLine(); // <-- Consuma il newline rimasto nel buffer
+                    sc.nextLine();
 
                     switch (scelta2) {
                         case 1 -> volo.setStato(Stato_del_volo.cancellato);

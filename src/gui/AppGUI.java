@@ -8,32 +8,33 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class AppGUI extends JFrame {
 
-    private AppController controller;
+    private final AppController controller;
 
-    private CardLayout cardLayout;
-    private JPanel mainPanel;
+    private final CardLayout cardLayout;
+    private final JPanel mainPanel;
 
     private JTextField txtNomeUtenteLogin;
     private JPasswordField txtPasswordLogin;
 
     private JTextField adminSearchNomeField;
     private JTextField adminSearchCognomeField;
-    private JTable adminPrenotazioniTable;
+
     private DefaultTableModel adminTableModel;
 
-    private JTextField adminCreaVoloCodice, adminCreaVoloCompagnia, adminCreaVoloOrigine, adminCreaVoloDestinazione,
-            adminCreaVoloData, adminCreaVoloOrario, adminCreaVoloGate;
+    private JTextField adminCreaVoloCodice;
+    private JTextField adminCreaVoloCompagnia;
+    private JTextField adminCreaVoloOrigine;
+    private JTextField adminCreaVoloDestinazione;
+    private JTextField adminCreaVoloData;
+    private JTextField adminCreaVoloOrario;
+    private JTextField adminCreaVoloGate;
     private JComboBox<String> adminCreaVoloTipo;
     private JComboBox<String> adminCreaVoloStatoComboBox;
 
@@ -127,13 +128,10 @@ public class AppGUI extends JFrame {
                         canBook = false; reason = "è cancellato";
                     } else if (sourceTable.getModel() == modelArrivo && statoVolo == Stato_del_volo.atterrato) {
                         canBook = false; reason = "è già atterrato";
-                    } else if (sourceTable.getModel() == modelPartenza) {
-                        if (!(statoVolo == Stato_del_volo.in_orario ||
-                                statoVolo == Stato_del_volo.in_ritardo ||
-                                statoVolo == Stato_del_volo.rinviato)) {
+                    } else if (sourceTable.getModel() == modelPartenza && !(statoVolo == Stato_del_volo.in_orario || statoVolo == Stato_del_volo.in_ritardo || statoVolo == Stato_del_volo.rinviato)) {
                             canBook = false; reason = "il suo stato (" + controller.mapStatoDelVoloToString(statoVolo) + ") non permette la prenotazione";
                         }
-                    }
+
                     if (!canBook) {
                         mostraMessaggioWarn("Impossibile prenotare il volo " + voloSelezionato.getCodice() + " perché " + reason + ".", "Prenotazione Non Disponibile");
                         return;
@@ -406,6 +404,7 @@ public class AppGUI extends JFrame {
     }
 
     private JPanel createAdminPrenotazioniPanel() {
+        JTable adminPrenotazioniTable;
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setName("AdminPrenotazioniPanel_Internal");
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -431,7 +430,7 @@ public class AppGUI extends JFrame {
         adminPrenotazioniTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         JScrollPane scrollPane = new JScrollPane(adminPrenotazioniTable);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         panel.add(scrollPane, BorderLayout.CENTER);
         aggiornaVistaAdminPrenotazioni("", "");
         return panel;
@@ -565,7 +564,9 @@ public class AppGUI extends JFrame {
         for (Prenotazione p : filteredPrenotazioni) {
             Passeggero pass = p.getPasseggero();
             Volo voloAssociato = controller.findVoloByCodice(p.getCodiceVolo());
-            String compagnia = "N/D", origineDest = "N/D", dataVolo = "N/D";
+            String compagnia = "N/D";
+            String origineDest = "N/D";
+            String dataVolo = "N/D";
             if (voloAssociato != null) {
                 compagnia = voloAssociato.getCompagniaAerea();
                 origineDest = voloAssociato.getOrigine() + "-" + voloAssociato.getDestinazione();
@@ -585,12 +586,10 @@ public class AppGUI extends JFrame {
         for (int i = 0; i < voli.size(); i++) {
             Volo v = voli.get(i);
             String gateDisplay = "N/A";
-            if (v instanceof Volo_partenza) {
-                Volo_partenza vp = (Volo_partenza) v;
-                if (vp.gate != null && vp.gate.getGate() != 0) {
+            if (v instanceof Volo_partenza vp && vp.gate != null && vp.gate.getGate() != 0) {
                     gateDisplay = String.valueOf(vp.gate.getGate());
                 }
-            }
+
             dati[i] = new Object[]{
                     v.getCodice(), v.getCompagniaAerea(), v.getOrigine(), v.getDestinazione(),
                     v.getData() != null ? v.getData().format(DATE_FORMATTER) : "N/D",
@@ -695,17 +694,22 @@ public class AppGUI extends JFrame {
     }
 
 
-    class PrenotazioneDialog extends JDialog {
-        private Volo voloDialogo;
-        private AppController controllerDialog;
-        private Prenotazione prenotazioneDaConfermare;
+    static class PrenotazioneDialog extends JDialog {
+        private final Volo voloDialogo;
+        private final AppController controllerDialog;
+        private final Prenotazione prenotazioneDaConfermare;
         private boolean confermata = false;
 
-        private JTextField txtNome, txtCognome, txtSSN, txtEmail, txtTelefono;
-        private JCheckBox chkBagaglio, chkAssicurazione;
+        private JTextField txtNome;
+        private JTextField txtCognome;
+        private JTextField txtSSN;
+        private JTextField txtEmail;
+        private JTextField txtTelefono;
+        private JCheckBox chkBagaglio;
+        private JCheckBox chkAssicurazione;
         private JLabel lblPostoSelezionatoDisplay;
         private String postoAttualmenteSelezionato = null;
-        private Map<String, JButton> bottoniSediliMap = new HashMap<>();
+        private final Map<String, JButton> bottoniSediliMap = new HashMap<>();
 
         public PrenotazioneDialog(Frame owner, Volo volo, AppController controller) {
             super(owner, "Dettagli Prenotazione Volo: " + volo.getCodice(), true);
@@ -889,6 +893,7 @@ public class AppGUI extends JFrame {
                 }
             }
         } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         SwingUtilities.invokeLater(() -> {
             AppController controller = new AppController();
