@@ -2,12 +2,31 @@ package model;
 
 import java.util.Scanner;
 
+/**
+ * Rappresenta un utente standard del sistema (es. passeggero)
+ * che può effettuare e modificare prenotazioni.
+ */
 public class Utente_generico extends Utente {
 
+    /**
+     * Costruttore per un nuovo Utente_generico.
+     * @param login l'username per l'accesso.
+     * @param password la password per l'accesso.
+     */
     public Utente_generico(String login, String password) {
         super(login, password);
     }
 
+    /**
+     * Crea un nuovo oggetto Prenotazione con i dati del passeggero e opzioni interattive.
+     * @param nome Nome del passeggero.
+     * @param cognome Cognome del passeggero.
+     * @param telefono Numero di telefono del passeggero.
+     * @param email Indirizzo email del passeggero.
+     * @param posto Posto selezionato.
+     * @param ssn Codice fiscale del passeggero.
+     * @return un'istanza di Prenotazione.
+     */
     public Prenotazione creaPrenotazione(String nome, String cognome, String telefono, String email,
                                   String posto, String ssn) {
         Prenotazione prenotazione = new Prenotazione();
@@ -38,6 +57,10 @@ public class Utente_generico extends Utente {
         return prenotazione;
     }
 
+    /**
+     * Permette di modificare i dettagli di una prenotazione esistente tramite input da console.
+     * @param pren la prenotazione da modificare.
+     */
     public void modificaPrenotazione(Prenotazione pren) {
         Scanner sc = new Scanner(System.in);
         int scelta1;

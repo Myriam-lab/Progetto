@@ -4,12 +4,33 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Scanner;
 
+/**
+ * Rappresenta un utente con privilegi di amministratore,
+ * in grado di creare e modificare i voli.
+ */
 public class Amministratore_sistema extends Utente {
 
+    /**
+     * Costruttore per un nuovo Amministratore_sistema.
+     * @param login l'username per l'accesso.
+     * @param password la password per l'accesso.
+     */
     public Amministratore_sistema(String login, String password) {
         super(login, password);
     }
 
+    /**
+     * Crea un nuovo volo in partenza con i dettagli specificati.
+     * @param gate numero del gate.
+     * @param hour ora di partenza.
+     * @param minute minuto di partenza.
+     * @param year anno di partenza.
+     * @param month mese di partenza.
+     * @param day giorno di partenza.
+     * @param destinazione destinazione del volo.
+     * @param compagnia compagnia aerea.
+     * @return un oggetto Volo_partenza.
+     */
     public Volo_partenza creaVoloPartenza(int gate, int hour, int minute, int year, int month, int day,
                                           String destinazione, String compagnia) {
 
@@ -22,6 +43,10 @@ public class Amministratore_sistema extends Utente {
         return volo;
     }
 
+    /**
+     * Permette di modificare i dettagli di un volo in partenza tramite input da console.
+     * @param volo il volo da modificare.
+     */
     public void modificaVolo(Volo_partenza volo) {
         Scanner sc = new Scanner(System.in);
         int scelta;
@@ -92,6 +117,17 @@ public class Amministratore_sistema extends Utente {
         }while (scelta < 6);
     }
 
+    /**
+     * Crea un nuovo volo in arrivo con i dettagli specificati.
+     * @param origine origine del volo.
+     * @param compagnia compagnia aerea.
+     * @param hour ora di arrivo.
+     * @param minute minuto di arrivo.
+     * @param year anno di arrivo.
+     * @param month mese di arrivo.
+     * @param day giorno di arrivo.
+     * @return un oggetto Volo_arrivo.
+     */
     public Volo_arrivo creaVoloArrivo(String origine, String compagnia,int hour, int minute, int year, int month, int day){
 
         Volo_arrivo volo = new Volo_arrivo(origine,compagnia);
@@ -102,6 +138,10 @@ public class Amministratore_sistema extends Utente {
         return volo;
     }
 
+    /**
+     * Permette di modificare i dettagli di un volo in arrivo tramite input da console.
+     * @param volo il volo da modificare.
+     */
     public void modificaVolo(Volo_arrivo volo) {
         Scanner sc = new Scanner(System.in);
         int scelta;

@@ -5,8 +5,19 @@ import util.DatabaseConnection;
 import java.sql.*;
 import java.util.Optional;
 
+/**
+ * Implementazione dell'interfaccia {@link PasseggeroDAO} per un database PostgreSQL.
+ * Fornisce la logica concreta per eseguire operazioni CRUD sulla tabella dei passeggeri.
+ */
 public class PasseggeroDAOImpl implements PasseggeroDAO {
 
+    /**
+     * Trova un passeggero nel database tramite il suo codice fiscale (SSN).
+     *
+     * @param ssn Il codice fiscale univoco del passeggero da cercare.
+     * @return un {@link Optional} che contiene l'oggetto {@link Passeggero} se viene trovato,
+     * altrimenti un Optional vuoto.
+     */
     @Override
     public Optional<Passeggero> findBySsn(String ssn) {
         String sql = "SELECT * FROM Passeggeri WHERE ssn = ?";
@@ -30,6 +41,13 @@ public class PasseggeroDAOImpl implements PasseggeroDAO {
         return Optional.empty();
     }
 
+    /**
+     * Salva un oggetto {@link Passeggero} nel database.
+     * Prima di inserire, controlla se un passeggero con lo stesso SSN è già presente
+     * per evitare duplicati. Se esiste, l'operazione termina.
+     *
+     * @param passeggero L'oggetto Passeggero da persistere.
+     */
     @Override
     public void save(Passeggero passeggero) {
         if (findBySsn(passeggero.getSsn()).isPresent()) return;

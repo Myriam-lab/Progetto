@@ -7,8 +7,17 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementazione dell'interfaccia {@link VoloDAO} per un database PostgreSQL.
+ * Gestisce le operazioni di lettura e scrittura per gli oggetti Volo sulla tabella dei voli.
+ */
 public class VoloDAOImpl implements VoloDAO {
 
+    /**
+     * Recupera una lista di tutti i voli il cui tipo è 'Arrivo'.
+     *
+     * @return una lista di oggetti {@link Volo} (specificamente {@link Volo_arrivo}).
+     */
     @Override
     public List<Volo> getVoliInArrivo() {
         List<Volo> voli = new ArrayList<>();
@@ -27,6 +36,11 @@ public class VoloDAOImpl implements VoloDAO {
         return voli;
     }
 
+    /**
+     * Recupera una lista di tutti i voli il cui tipo è 'Partenza'.
+     *
+     * @return una lista di oggetti {@link Volo} (specificamente {@link Volo_partenza}).
+     */
     @Override
     public List<Volo> getVoliInPartenza() {
         List<Volo> voli = new ArrayList<>();
@@ -46,6 +60,13 @@ public class VoloDAOImpl implements VoloDAO {
         return voli;
     }
 
+    /**
+     * Trova un singolo volo nel database usando il suo codice univoco.
+     * Determina se il volo è di tipo 'Partenza' o 'Arrivo' e istanzia l'oggetto corretto.
+     *
+     * @param codiceVolo il codice del volo da trovare.
+     * @return un oggetto {@link Volo} (o una sua sottoclasse) se trovato, altrimenti {@code null}.
+     */
     @Override
     public Volo findVoloByCodice(String codiceVolo) {
         String sql = "SELECT * FROM Voli WHERE codice_volo = ?";
@@ -73,6 +94,14 @@ public class VoloDAOImpl implements VoloDAO {
         return null;
     }
 
+    /**
+     * Salva un nuovo volo nel database.
+     * Utilizza {@code instanceof} per determinare il tipo di volo (partenza o arrivo)
+     * e impostare correttamente i campi 'tipo_volo' e 'gate_numero' nella query SQL.
+     *
+     * @param volo l'oggetto Volo da persistere.
+     * @return {@code true} se l'operazione di inserimento ha successo, {@code false} altrimenti.
+     */
     @Override
     public boolean creaNuovoVolo(Volo volo) {
         String sql = "INSERT INTO Voli (codice_volo, compagnia_aerea, tipo_volo, origine, destinazione, data_volo, orario_previsto, stato, gate_numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -99,7 +128,14 @@ public class VoloDAOImpl implements VoloDAO {
         }
     }
 
-    // Metodo di utilità per non ripetere codice
+    /**
+     * Metodo di utilità privato per popolare un oggetto Volo con i dati da un ResultSet.
+     * Evita la duplicazione del codice nei metodi di recupero dei voli.
+     *
+     * @param volo L'oggetto Volo da popolare.
+     * @param rs Il ResultSet da cui leggere i dati.
+     * @throws SQLException se si verifica un errore durante la lettura dal ResultSet.
+     */
     private void populateVoloFromResultSet(Volo volo, ResultSet rs) throws SQLException {
         volo.setCodice(rs.getString("codice_volo"));
         volo.setCompagniaAerea(rs.getString("compagnia_aerea"));

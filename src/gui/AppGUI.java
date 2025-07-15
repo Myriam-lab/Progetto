@@ -13,6 +13,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * La classe principale per l'interfaccia grafica (GUI) dell'applicazione di gestione aeroportuale.
+ * Estende {@link JFrame} e costruisce l'intera interfaccia utente utilizzando la libreria Swing.
+ * Utilizza un {@link CardLayout} per gestire e navigare tra i diversi pannelli (es. login, visualizzazione voli, gestione admin).
+ * Interagisce con l'{@link AppController} per tutta la logica di business e il recupero dei dati.
+ */
 public class AppGUI extends JFrame {
 
     private final AppController controller;
@@ -45,6 +51,11 @@ public class AppGUI extends JFrame {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME;
 
 
+    /**
+     * Costruttore della AppGUI.
+     *
+     * @param controller l'istanza di {@link AppController} che gestisce la logica dell'applicazione.
+     */
     public AppGUI(AppController controller) {
         this.controller = controller;
         this.controller.setGui(this);
@@ -71,6 +82,13 @@ public class AppGUI extends JFrame {
     }
 
 
+    /**
+     * Crea e restituisce il pannello principale per la visualizzazione dei voli.
+     * Questo pannello può essere in due stati: non autenticato (mostra il pulsante di login) o autenticato.
+     *
+     * @param loggedIn {@code true} se l'utente è autenticato, {@code false} altrimenti.
+     * @return un {@link JPanel} contenente le tabelle dei voli in arrivo e in partenza.
+     */
     private JPanel createVoloPanel(boolean loggedIn) {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setName(loggedIn ? "VoloPanel_LoggedIn" : "VoloPanel_Initial_Instance");
@@ -186,6 +204,11 @@ public class AppGUI extends JFrame {
         return panel;
     }
 
+    /**
+     * Crea e restituisce il pannello di login.
+     *
+     * @return un {@link JPanel} con i campi per l'inserimento di username e password.
+     */
     private JPanel createLoginPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setName("LoginPanel");
@@ -250,6 +273,13 @@ public class AppGUI extends JFrame {
     }
 
 
+    /**
+     * Crea il pannello principale visualizzato dopo che l'utente ha effettuato il login con successo.
+     * Questo pannello contiene la barra di navigazione e un altro CardLayout per i contenuti interni
+     * (es. visualizzazione voli, prenotazioni, pannelli admin).
+     *
+     * @return un {@link JPanel} che funge da contenitore per le funzionalità post-login.
+     */
     private JPanel createMainContentPanelForLoggedInUser() {
         JPanel container = new JPanel(new BorderLayout(0, 0));
         container.setName("MainContentPanel_Container_LoggedIn");
@@ -346,6 +376,11 @@ public class AppGUI extends JFrame {
     }
 
 
+    /**
+     * Crea il pannello per visualizzare le prenotazioni di un utente generico.
+     *
+     * @return un {@link JPanel} con una tabella delle prenotazioni dell'utente.
+     */
     private JPanel createMiePrenotazioniPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setName("MiePrenotazioniPanel_Internal");
@@ -403,6 +438,11 @@ public class AppGUI extends JFrame {
         return panel;
     }
 
+    /**
+     * Crea il pannello per l'amministratore per cercare e visualizzare tutte le prenotazioni.
+     *
+     * @return un {@link JPanel} con filtri di ricerca e una tabella di risultati.
+     */
     private JPanel createAdminPrenotazioniPanel() {
         JTable adminPrenotazioniTable;
         JPanel panel = new JPanel(new BorderLayout(10, 10));
@@ -436,6 +476,11 @@ public class AppGUI extends JFrame {
         return panel;
     }
 
+    /**
+     * Crea il pannello per l'amministratore per inserire i dati di un nuovo volo.
+     *
+     * @return un {@link JPanel} con un modulo per la creazione di un nuovo volo.
+     */
     private JPanel createAdminCreaVoloPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setName("AdminCreaVoloPanel_Internal");
@@ -509,6 +554,10 @@ public class AppGUI extends JFrame {
     }
 
 
+    /**
+     * Aggiorna le tabelle dei voli in arrivo e in partenza.
+     * Ricrea il pannello dei voli per riflettere eventuali cambiamenti nei dati.
+     */
     public void aggiornaTabelleVoli() {
 
         Component visibleCardInMain = getCurrentVisibleCard(mainPanel);
@@ -538,6 +587,9 @@ public class AppGUI extends JFrame {
     }
 
 
+    /**
+     * Aggiorna la vista "Le Mie Prenotazioni" per l'utente generico.
+     */
     private void aggiornaVistaMiePrenotazioni() {
         JPanel mainContentActual = (JPanel) findComponentByName(mainPanel, "MainContentArea_Actual");
         if (mainContentActual != null) {
@@ -555,6 +607,13 @@ public class AppGUI extends JFrame {
     }
 
 
+    /**
+     * Aggiorna la tabella delle prenotazioni nel pannello di amministrazione
+     * basandosi sui filtri di nome e cognome.
+     *
+     * @param nomeFilter    il filtro per il nome da applicare.
+     * @param cognomeFilter il filtro per il cognome da applicare.
+     */
     private void aggiornaVistaAdminPrenotazioni(String nomeFilter, String cognomeFilter) {
         if (adminTableModel == null) return;
         adminTableModel.setRowCount(0);
@@ -581,6 +640,13 @@ public class AppGUI extends JFrame {
         }
     }
 
+    /**
+     * Converte una lista di oggetti {@link Volo} in un array bidimensionale di {@link Object}
+     * adatto per essere visualizzato in una {@link JTable}.
+     *
+     * @param voli la lista di voli da convertire.
+     * @return un array 2D di dati per la tabella.
+     */
     private Object[][] getDatiVoliTable(List<Volo> voli) {
         Object[][] dati = new Object[voli.size()][8];
         for (int i = 0; i < voli.size(); i++) {
@@ -601,6 +667,10 @@ public class AppGUI extends JFrame {
         return dati;
     }
 
+    /**
+     * Gestisce la logica reattiva del modulo di creazione volo dell'admin.
+     * Abilita/disabilita e pre-compila i campi Origine/Destinazione/Gate in base al tipo di volo selezionato.
+     */
     private void handleAdminCreaVoloTipoChange() {
         if (adminCreaVoloTipo == null || adminCreaVoloOrigine == null || adminCreaVoloDestinazione == null || adminCreaVoloGate == null) {
             return;
@@ -633,6 +703,10 @@ public class AppGUI extends JFrame {
             adminCreaVoloGate.setEnabled(true);
         }
     }
+
+    /**
+     * Resetta tutti i campi del modulo di creazione volo dell'admin al loro stato iniziale.
+     */
     private void resetAdminCreaVoloForm() {
         if(adminCreaVoloCodice != null) adminCreaVoloCodice.setText("");
         if(adminCreaVoloCompagnia != null) adminCreaVoloCompagnia.setText("");
@@ -650,6 +724,11 @@ public class AppGUI extends JFrame {
     }
 
 
+    /**
+     * Trova il componente JLabel associato al campo di testo del Gate nel pannello di creazione volo.
+     *
+     * @return la {@link JLabel} per il "Gate", o {@code null} se non trovata.
+     */
     private JLabel findGateLabelForAdminCreaVolo() {
         if (adminCreaVoloGate == null || adminCreaVoloGate.getParent() == null) return null;
         for(Component comp : adminCreaVoloGate.getParent().getComponents()){
@@ -660,20 +739,53 @@ public class AppGUI extends JFrame {
         return null;
     }
 
+    /**
+     * Mostra un messaggio di dialogo informativo.
+     *
+     * @param messaggio il messaggio da visualizzare.
+     * @param titolo    il titolo della finestra di dialogo.
+     */
     public void mostraMessaggioInformativo(String messaggio, String titolo) {
         JOptionPane.showMessageDialog(this, messaggio, titolo, JOptionPane.INFORMATION_MESSAGE);
     }
+
+    /**
+     * Mostra un messaggio di dialogo di errore.
+     *
+     * @param messaggio il messaggio da visualizzare.
+     * @param titolo    il titolo della finestra di dialogo.
+     */
     public void mostraMessaggioErrore(String messaggio, String titolo) {
         JOptionPane.showMessageDialog(this, messaggio, titolo, JOptionPane.ERROR_MESSAGE);
     }
+
+    /**
+     * Mostra un messaggio di dialogo di avviso.
+     *
+     * @param messaggio il messaggio da visualizzare.
+     * @param titolo    il titolo della finestra di dialogo.
+     */
     public void mostraMessaggioWarn(String messaggio, String titolo) {
         JOptionPane.showMessageDialog(this, messaggio, titolo, JOptionPane.WARNING_MESSAGE);
     }
+
+    /**
+     * Mostra un messaggio di dialogo di errore, specifico per l'uso all'interno di altri dialoghi.
+     *
+     * @param messaggio il messaggio da visualizzare.
+     * @param titolo    il titolo della finestra di dialogo.
+     */
     public void mostraMessaggioErroreDialogo(String messaggio, String titolo) {
         JOptionPane.showMessageDialog(this, messaggio, titolo, JOptionPane.ERROR_MESSAGE);
     }
 
 
+    /**
+     * Restituisce il componente attualmente visibile all'interno di un pannello con CardLayout.
+     *
+     * @param cardPanel il pannello su cui cercare.
+     * @return il {@link Component} visibile, o {@code null}.
+     */
     private Component getCurrentVisibleCard(JPanel cardPanel) {
         for (Component comp : cardPanel.getComponents()) {
             if (comp.isVisible()) return comp;
@@ -681,6 +793,13 @@ public class AppGUI extends JFrame {
         return null;
     }
 
+    /**
+     * Trova un componente all'interno di un contenitore basandosi sul suo nome.
+     *
+     * @param container il contenitore in cui cercare.
+     * @param name      il nome del componente da trovare.
+     * @return il {@link Component} trovato, o {@code null}.
+     */
     private Component findComponentByName(Container container, String name) {
         if (name == null || container == null) return null;
         for (Component comp : container.getComponents()) {
@@ -694,6 +813,11 @@ public class AppGUI extends JFrame {
     }
 
 
+    /**
+     * Classe interna che definisce un {@link JDialog} modale per il processo di creazione di una prenotazione.
+     * Contiene schede per l'inserimento dei dati del passeggero, la scelta del posto da una mappa grafica
+     * e la selezione di opzioni extra.
+     */
     static class PrenotazioneDialog extends JDialog {
         private final Volo voloDialogo;
         private final AppController controllerDialog;
@@ -711,6 +835,13 @@ public class AppGUI extends JFrame {
         private String postoAttualmenteSelezionato = null;
         private final Map<String, JButton> bottoniSediliMap = new HashMap<>();
 
+        /**
+         * Costruttore per il dialogo di prenotazione.
+         *
+         * @param owner      il frame proprietario del dialogo.
+         * @param volo       l'oggetto Volo per cui si sta effettuando la prenotazione.
+         * @param controller l'istanza del controller dell'applicazione.
+         */
         public PrenotazioneDialog(Frame owner, Volo volo, AppController controller) {
             super(owner, "Dettagli Prenotazione Volo: " + volo.getCodice(), true);
             this.voloDialogo = volo;
@@ -763,6 +894,11 @@ public class AppGUI extends JFrame {
             add(panelBottoni, BorderLayout.SOUTH);
         }
 
+        /**
+         * Valida tutti i dati inseriti nel dialogo prima di confermare la prenotazione.
+         *
+         * @return {@code true} se tutti i dati sono validi, {@code false} altrimenti.
+         */
         private boolean validaDatiPrenotazione() {
             String nome = txtNome.getText().trim();
             String cognome = txtCognome.getText().trim();
@@ -793,6 +929,11 @@ public class AppGUI extends JFrame {
         }
 
 
+        /**
+         * Crea il pannello per l'inserimento dei dati anagrafici del passeggero.
+         *
+         * @return un {@link JPanel} per il modulo dei dati personali.
+         */
         private JPanel createPanelDatiPersonaliDialog() {
             JPanel panel = new JPanel(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints();
@@ -818,6 +959,12 @@ public class AppGUI extends JFrame {
             return panel;
         }
 
+        /**
+         * Crea il pannello per la scelta del posto, mostrando una mappa grafica dei sedili.
+         * I posti occupati sono mostrati in rosso e disabilitati, quelli liberi in verde.
+         *
+         * @return un {@link JPanel} con la mappa dei posti.
+         */
         private JPanel createPanelSceltaPostoDialog() {
             JPanel panel = new JPanel(new BorderLayout(5,5));
             JPanel mappaPostiPanel = new JPanel(new GridLayout(NUM_FILE_SEDILI, (ULTIMA_LETTERA_SEDILE - 'A') + 1, 3, 3));
@@ -853,6 +1000,13 @@ public class AppGUI extends JFrame {
             return panel;
         }
 
+        /**
+         * Gestisce la selezione di un posto sulla mappa.
+         * Aggiorna lo stato visivo dei pulsanti (il posto selezionato diventa arancione)
+         * e memorizza la selezione.
+         *
+         * @param nomePosto il nome del posto selezionato (es. "3C").
+         */
         private void selezionaPostoDialog(String nomePosto) {
             if (postoAttualmenteSelezionato != null && bottoniSediliMap.containsKey(postoAttualmenteSelezionato)) {
                 JButton vecchioBottone = bottoniSediliMap.get(postoAttualmenteSelezionato);
@@ -865,6 +1019,11 @@ public class AppGUI extends JFrame {
             lblPostoSelezionatoDisplay.setText("Posto selezionato: " + nomePosto);
         }
 
+        /**
+         * Crea il pannello per la selezione di opzioni extra come bagaglio e assicurazione.
+         *
+         * @return un {@link JPanel} con le checkbox per le opzioni.
+         */
         private JPanel createPanelOpzioniExtraDialog() {
             JPanel panel = new JPanel();
             panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -878,12 +1037,35 @@ public class AppGUI extends JFrame {
         }
 
 
+        /**
+         * Indica se la prenotazione è stata confermata con successo dall'utente.
+         *
+         * @return {@code true} se confermata, {@code false} altrimenti.
+         */
         public boolean isPrenotazioneConfermata() { return confermata; }
+
+        /**
+         * Restituisce l'oggetto Prenotazione con i dati inseriti.
+         *
+         * @return l'oggetto {@link Prenotazione}.
+         */
         public Prenotazione getPrenotazione() { return prenotazioneDaConfermare; }
+
+        /**
+         * Restituisce la stringa che identifica il posto selezionato.
+         *
+         * @return il posto selezionato (es. "4A").
+         */
         public String getPostoAttualmenteSelezionato() { return postoAttualmenteSelezionato; }
     }
 
 
+    /**
+     * Metodo main per l'avvio dell'applicazione.
+     * Imposta il look and feel "Nimbus" e avvia la GUI nel thread di dispatch degli eventi di Swing.
+     *
+     * @param args argomenti della riga di comando (non utilizzati).
+     */
     public static void main(String[] args) {
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {

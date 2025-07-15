@@ -8,10 +8,22 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementazione dell'interfaccia {@link PrenotazioneDAO} per un database PostgreSQL.
+ * Contiene la logica per interagire con la tabella delle prenotazioni e dei passeggeri.
+ */
 public class PrenotazioneDAOImpl implements PrenotazioneDAO {
 
     private final PasseggeroDAO passeggeroDAO = new PasseggeroDAOImpl();
 
+    /**
+     * Salva una nuova prenotazione nel database.
+     * Prima di salvare la prenotazione, si assicura che il passeggero associato
+     * sia presente nel database invocando il metodo {@code save} del passeggeroDAO.
+     *
+     * @param prenotazione L'oggetto {@link Prenotazione} da salvare.
+     * @return {@code true} se l'inserimento ha successo, {@code false} altrimenti.
+     */
     @Override
     public boolean creaPrenotazione(Prenotazione prenotazione) {
         passeggeroDAO.save(prenotazione.getPasseggero());
@@ -31,11 +43,27 @@ public class PrenotazioneDAOImpl implements PrenotazioneDAO {
         }
     }
 
+    /**
+     * Recupera le prenotazioni per un dato nome utente.
+     * Questo metodo riutilizza la logica di {@code getPrenotazioniFiltrateAdmin},
+     * passando il nome utente come filtro per il nome e una stringa vuota per il cognome.
+     *
+     * @param nomeUtente il nome utente per cui recuperare le prenotazioni.
+     * @return una lista di {@link Prenotazione}.
+     */
     @Override
     public List<Prenotazione> getPrenotazioniPerUtente(String nomeUtente) {
         return getPrenotazioniFiltrateAdmin(nomeUtente, "");
     }
 
+    /**
+     * Recupera una lista di prenotazioni dal database, filtrando per nome e cognome del passeggero.
+     * Esegue una JOIN con la tabella dei passeggeri. La ricerca è case-insensitive e parziale (LIKE %).
+     *
+     * @param nomeFilter Il filtro per il nome del passeggero.
+     * @param cognomeFilter Il filtro per il cognome del passeggero.
+     * @return Una lista di oggetti {@link Prenotazione} corrispondenti ai filtri.
+     */
     @Override
     public List<Prenotazione> getPrenotazioniFiltrateAdmin(String nomeFilter, String cognomeFilter) {
         List<Prenotazione> prenotazioni = new ArrayList<>();
@@ -70,6 +98,12 @@ public class PrenotazioneDAOImpl implements PrenotazioneDAO {
         return prenotazioni;
     }
 
+    /**
+     * Recupera la lista dei posti occupati per un volo specifico.
+     *
+     * @param codiceVolo il codice del volo di cui si vogliono conoscere i posti occupati.
+     * @return una lista di stringhe che rappresentano i posti occupati.
+     */
     @Override
     public List<String> getPostiOccupatiPerVolo(String codiceVolo) {
         List<String> posti = new ArrayList<>();
