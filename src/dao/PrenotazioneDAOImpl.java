@@ -59,20 +59,39 @@ public class PrenotazioneDAOImpl implements PrenotazioneDAO {
     /**
      * Recupera una lista di prenotazioni dal database, filtrando per nome e cognome del passeggero.
      * Esegue una JOIN con la tabella dei passeggeri. La ricerca è case-insensitive e parziale (LIKE %).
+     * <p>
+     * <b>Nota sulla Logica Correttiva:</b>
+     * È stata introdotta una logica speciale per gestire la visualizzazione delle prenotazioni
+     * da parte dell'utente generico. Se il filtro per il nome corrisponde a "utente" (ignorando maiuscole/minuscole)
+     * e il filtro per il cognome è vuoto, il metodo recupererà <strong>tutte le prenotazioni</strong>
+     * presenti nel sistema. Questo assicura che l'utente generico possa vedere le prenotazioni che ha creato
+     * per passeggeri con nomi diversi dal suo username.
+     * In tutti gli altri casi, la ricerca funziona con i filtri specificati, come previsto per l'amministratore.
      *
-     * @param nomeFilter Il filtro per il nome del passeggero.
+     * @param nomeFilter Il filtro per il nome del passeggero. Se è "utente", attiva la logica speciale.
      * @param cognomeFilter Il filtro per il cognome del passeggero.
      * @return Una lista di oggetti {@link Prenotazione} corrispondenti ai filtri.
      */
     @Override
     public List<Prenotazione> getPrenotazioniFiltrateAdmin(String nomeFilter, String cognomeFilter) {
         List<Prenotazione> prenotazioni = new ArrayList<>();
-        String sql = "SELECT * FROM Prenotazioni pr JOIN Passeggeri p ON pr.ssn_passeggero_fk = p.ssn WHERE LOWER(p.nome) LIKE ? AND LOWER(p.cognome) LIKE ?";
+        String sql;
+        boolean isUtenteGenericoView = "utente".equalsIgnoreCase(nomeFilter) && (cognomeFilter == null || cognomeFilter.trim().isEmpty());
+
+        if (isUtenteGenericoView) {
+            sql = "SELECT * FROM Prenotazioni pr JOIN Passeggeri p ON pr.ssn_passeggero_fk = p.ssn";
+        } else {
+            sql = "SELECT * FROM Prenotazioni pr JOIN Passeggeri p ON pr.ssn_passeggero_fk = p.ssn WHERE LOWER(p.nome) LIKE ? AND LOWER(p.cognome) LIKE ?";
+        }
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, "%" + nomeFilter.toLowerCase() + "%");
-            pstmt.setString(2, "%" + cognomeFilter.toLowerCase() + "%");
+
+            if (!isUtenteGenericoView) {
+                pstmt.setString(1, "%" + (nomeFilter != null ? nomeFilter.toLowerCase() : "") + "%");
+                pstmt.setString(2, "%" + (cognomeFilter != null ? cognomeFilter.toLowerCase() : "") + "%");
+            }
+
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     Passeggero p = new Passeggero();
@@ -86,8 +105,12 @@ public class PrenotazioneDAOImpl implements PrenotazioneDAO {
                     Prenotazione pr = new Prenotazione();
                     pr.setPasseggero(p);
                     pr.setCodiceVolo(rs.getString("codice_volo_fk"));
-                    if(rs.getBoolean("assicurazione")) pr.updateAssicurazione();
-                    if(rs.getBoolean("bagaglio")) pr.updateBagaglio();
+                    if (rs.getBoolean("assicurazione")) {
+                        pr.updateAssicurazione();
+                    }
+                    if (rs.getBoolean("bagaglio")) {
+                        pr.updateBagaglio();
+                    }
 
                     prenotazioni.add(pr);
                 }

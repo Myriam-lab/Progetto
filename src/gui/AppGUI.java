@@ -235,7 +235,8 @@ public class AppGUI extends JFrame {
         JButton btnAccedi = new JButton("Accedi");
         btnAccedi.setPreferredSize(new Dimension(100, 30));
         btnAccedi.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btnAccedi.addActionListener(e -> {
+
+        ActionListener loginAction = e -> {
             String user = txtNomeUtenteLogin.getText();
             String pass = new String(txtPasswordLogin.getPassword());
             boolean loginSuccess = controller.login(user, pass);
@@ -255,7 +256,11 @@ public class AppGUI extends JFrame {
             } else {
                 mostraMessaggioErrore("Credenziali non valide", "Login Fallito");
             }
-        });
+        };
+
+        btnAccedi.addActionListener(loginAction);
+        txtNomeUtenteLogin.addActionListener(loginAction);
+        txtPasswordLogin.addActionListener(loginAction);
 
         JButton btnBack = new JButton("Torna ai Voli");
         btnBack.setPreferredSize(new Dimension(120, 30));
